@@ -23,6 +23,21 @@ class AuthController {
   }
 
   /**
+   * Helper to fetch configured Telegram bot token from system_settings or fallback to env
+   */
+  static async getTelegramBotToken() {
+    try {
+      const res = await db.query("SELECT value FROM system_settings WHERE key = 'telegram_bot_token' LIMIT 1;");
+      if (res.rows.length > 0 && res.rows[0].value && res.rows[0].value.trim()) {
+        return res.rows[0].value.trim();
+      }
+    } catch (err) {
+      console.warn('Could not fetch telegram_bot_token from system_settings:', err);
+    }
+    return '';
+  }
+
+  /**
    * Register a new player account
    */
   static async register(req, res, next) {
@@ -297,8 +312,10 @@ class AuthController {
         const hash = params.get('hash');
         params.delete('hash');
 
+        const activeBotToken = await AuthController.getTelegramBotToken();
+
         // Check hash if bot token configured
-        if (config.TELEGRAM_BOT_TOKEN && hash) {
+        if (activeBotToken && hash) {
           const dataCheckArr = [];
           Array.from(params.keys()).sort().forEach(key => {
             dataCheckArr.push(`${key}=${params.get(key)}`);
@@ -306,7 +323,7 @@ class AuthController {
           const dataCheckString = dataCheckArr.join('\n');
 
           const secretKey = crypto.createHmac('sha256', 'WebAppData')
-            .update(config.TELEGRAM_BOT_TOKEN)
+            .update(activeBotToken)
             .digest();
 
           const calculatedHash = crypto.createHmac('sha256', secretKey)

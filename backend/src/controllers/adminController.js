@@ -286,6 +286,7 @@ class AdminController {
           ('referral_bind_bonus_coins', '50', 'Bonus coins awarded immediately to a player upon entering and binding an inviter referral code'),
           ('bakong_api_token', '', 'Bearer token from NBC Bakong Open API Portal (https://api-bakong.nbc.gov.kh/) to automatically verify KHQR transfers by MD5'),
           ('bakong_developer_email', '', 'Registered developer email on api-bakong.nbc.gov.kh used for scheduled automatic token renewals'),
+          ('telegram_bot_token', '', 'Bot token from @BotFather on Telegram used to validate Mini App authentication and bot services'),
           ('supported_bank_names', '${JSON.stringify(DEFAULT_SUPPORTED_BANKS).replace(/'/g, "''")}', 'JSON list of supported bank names for player payment method setup and cash-out withdrawals')
         ON CONFLICT (key) DO NOTHING;
       `);
@@ -299,6 +300,7 @@ class AdminController {
           CASE 
             WHEN key IN ('game_auto_start_seconds', 'max_players_per_table', 'quick_play_coins', 'allowed_entry_fees', 'platform_fee_percent', 'crashed_game_timeout_minutes', 'crashed_game_timeout_hours', 'chat_messages_per_minute', 'auto_rejoin_enabled', 'auto_rejoin_delay_seconds', 'bot_players_enabled', 'max_bot_players_per_table', 'bot_join_delay_seconds') THEN 'gameplay'
             WHEN key IN ('topup_coins_per_usd', 'topup_coin_presets', 'bakong_api_token', 'bakong_developer_email') THEN 'topup'
+            WHEN key IN ('telegram_bot_token') THEN 'telegram'
             WHEN key IN ('coins_per_usd', 'min_withdrawal_coins', 'supported_bank_names') THEN 'withdrawal'
             WHEN key IN ('daily_bonus_coins', 'welcome_bonus_coins') THEN 'rewards'
             WHEN key IN ('referral_program_enabled', 'referral_bonus_level1_percent', 'referral_bonus_level2_percent', 'referral_bind_bonus_coins') THEN 'referral'
@@ -307,6 +309,7 @@ class AdminController {
           CASE 
             WHEN key IN ('game_auto_start_seconds', 'max_players_per_table', 'quick_play_coins', 'allowed_entry_fees', 'platform_fee_percent', 'crashed_game_timeout_minutes', 'crashed_game_timeout_hours', 'chat_messages_per_minute', 'auto_rejoin_enabled', 'auto_rejoin_delay_seconds', 'bot_players_enabled', 'max_bot_players_per_table', 'bot_join_delay_seconds') THEN 'Gameplay & Tables'
             WHEN key IN ('topup_coins_per_usd', 'topup_coin_presets', 'bakong_api_token', 'bakong_developer_email') THEN 'Buy Coins & Deposits'
+            WHEN key IN ('telegram_bot_token') THEN 'Telegram Bot & Mini App'
             WHEN key IN ('coins_per_usd', 'min_withdrawal_coins', 'supported_bank_names') THEN 'Sell Coins'
             WHEN key IN ('daily_bonus_coins', 'welcome_bonus_coins') THEN 'Rewards & Bonuses'
             WHEN key IN ('referral_program_enabled', 'referral_bonus_level1_percent', 'referral_bonus_level2_percent', 'referral_bind_bonus_coins') THEN 'Referral Program'
@@ -345,6 +348,8 @@ class AdminController {
             WHEN key = 'referral_bonus_level1_percent' THEN 23
             WHEN key = 'referral_bonus_level2_percent' THEN 24
             WHEN key = 'referral_bind_bonus_coins' THEN 25
+            -- Group 6: Telegram Bot & Mini App
+            WHEN key = 'telegram_bot_token' THEN 26
             ELSE 99
           END ASC, key ASC;
       `);
@@ -1281,6 +1286,43 @@ class AdminController {
       return res.json(result);
     } catch (err) {
       next(err);
+    }
+  }
+
+  /**
+   * Verify Telegram Bot Token by calling Telegram's getMe API
+   */
+  static async verifyTelegramBot(req, res, next) {
+    try {
+      let { token } = req.body;
+      if (!token || !token.trim()) {
+        const settingRes = await db.query("SELECT value FROM system_settings WHERE key = 'telegram_bot_token' LIMIT 1;");
+        token = settingRes.rows[0]?.value?.trim() || '';
+      }
+
+      if (!token) {
+        return res.status(400).json({ success: false, error: 'Telegram Bot Token is required' });
+      }
+
+      const response = await fetch(`https://api.telegram.org/bot${token.trim()}/getMe`);
+      const data = await response.json();
+
+      if (data && data.ok) {
+        return res.json({
+          success: true,
+          bot: data.result,
+          message: `Connected successfully as @${data.result.username} (${data.result.first_name})`,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: data?.description || 'Invalid Telegram Bot Token',
+          errorCode: data?.error_code,
+        });
+      }
+    } catch (err) {
+      console.error('[AdminController] verifyTelegramBot error:', err.message);
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 

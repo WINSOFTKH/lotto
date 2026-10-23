@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  QrCode,
+  Store,
   CheckCircle2,
   X,
   Coins,
@@ -18,6 +18,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { khqrAPI, adminAPI } from "../services/api";
+import CoinIcon from "./CoinIcon";
 
 const DEFAULT_PRESETS = [
   { coins: 50000, usd: 12.5, label: "Starter" },
@@ -109,14 +110,23 @@ export default function KhqrTopupModal({
         const res = await khqrAPI.checkStatus(qrData.transactionId);
         if (res.data?.data?.status === "completed") {
           handlePaymentSuccess(res.data.data);
+        } else if (res.data?.data?.rateLimited) {
+          // If Bakong 100/day daily limit is reached, stop automatic polling to prevent spamming
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          setPendingNote(
+            "Bakong daily query limit reached (100/day). Please click 'I Have Paid' or ask an Admin to approve instantly.",
+          );
         }
       } catch (err) {
         // Silently continue polling
       }
     };
 
-    // Run first check after 2s, then every 2.5s
-    pollIntervalRef.current = setInterval(checkStatus, 2500);
+    // Run periodic check every 12s to protect Bakong daily quota of 100
+    pollIntervalRef.current = setInterval(checkStatus, 12000);
 
     return () => {
       if (pollIntervalRef.current) {
@@ -199,13 +209,18 @@ export default function KhqrTopupModal({
         handlePaymentSuccess(res.data.data);
       } else {
         const d = res.data?.data;
-        if (d?.bakongConfigured === false) {
+        if (d?.rateLimited) {
           setPendingNote(
-            "Bakong API Token is not configured. Transfers require Admin Approval or an NBC Bakong developer token."
+            d.bakongResponse ||
+              "Bakong daily query limit reached (100/day). Please click 'I Have Paid' or ask an Admin to approve.",
+          );
+        } else if (d?.bakongConfigured === false) {
+          setPendingNote(
+            "Bakong API Token is not configured. Transfers require Admin Approval or an NBC Bakong developer token.",
           );
         } else {
           setPendingNote(
-            "Payment not confirmed by bank yet. Please allow a few seconds for the network to verify."
+            "Payment not confirmed by bank yet. Please allow a few seconds for the network to verify.",
           );
         }
         setTimeout(() => setPendingNote(""), 7000);
@@ -356,8 +371,8 @@ export default function KhqrTopupModal({
 
           {/* Header */}
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-red-600 to-rose-400 flex items-center justify-center text-white shadow-lg shadow-red-600/30">
-              <QrCode className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center text-black shadow-lg shadow-amber-500/25">
+              <Store className="w-6 h-6 stroke-[2.2]" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white flex items-center space-x-2">
@@ -397,7 +412,7 @@ export default function KhqrTopupModal({
 
               <div className="p-4 rounded-2xl bg-casino-dark border border-emerald-500/30 max-w-sm mx-auto space-y-2">
                 <div className="flex items-center justify-center space-x-2 text-amber-400">
-                  <Coins className="w-6 h-6" />
+                  <CoinIcon className="w-7 h-7" />
                   <span className="text-2xl sm:text-3xl font-black font-mono">
                     +
                     {Number(
@@ -471,7 +486,7 @@ export default function KhqrTopupModal({
                         </span>
                       )}
                       <div className="flex items-center space-x-1.5 text-amber-400 mb-0.5">
-                        <Coins className="w-4 h-4" />
+                        <CoinIcon className="w-4 h-4" />
                         <span className="font-extrabold text-base font-mono">
                           {pkg.coins.toLocaleString()}
                         </span>
@@ -507,14 +522,8 @@ export default function KhqrTopupModal({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-colors ${
-                        isCustom
-                          ? "bg-amber-500 text-black border-amber-400 shadow-sm"
-                          : "bg-casino-dark text-amber-400 border-casino-border"
-                      }`}
-                    >
-                      <Coins className="w-3.5 h-3.5" />
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center border border-casino-border bg-casino-dark">
+                      <CoinIcon className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="text-xs font-black text-white block">
@@ -611,14 +620,14 @@ export default function KhqrTopupModal({
               <button
                 onClick={handleGenerateQR}
                 disabled={loading || effectiveCoins <= 0}
-                className="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-red-600 via-rose-600 to-red-500 hover:from-red-500 hover:to-rose-500 text-white shadow-lg shadow-red-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 active:scale-95"
+                className="w-full py-3.5 rounded-xl font-black text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:from-amber-400 hover:to-yellow-200 text-black shadow-lg shadow-amber-500/25 flex items-center justify-center space-x-2 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
               >
                 <span>
                   {loading
                     ? "Generating QR Code..."
                     : `Generate QR Code ($${effectiveUsd.toFixed(2)} USD)`}
                 </span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
               </button>
             </div>
           ) : (
@@ -650,7 +659,7 @@ export default function KhqrTopupModal({
                   />
                   <div className="mt-1 text-center">
                     <span className="text-xs font-black text-slate-900 block uppercase tracking-tight">
-                      KH-LOTTO CASINO
+                      LOTTO 4U
                     </span>
                     <span className="text-sm font-black text-emerald-600 font-mono block">
                       ${qrData.amountUsd} USD
@@ -669,25 +678,6 @@ export default function KhqrTopupModal({
                 >
                   <Download className="w-3.5 h-3.5 text-red-500" />
                   <span>Save QR Image</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopyQR}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-casino-dark dark:hover:bg-casino-border border border-slate-300 dark:border-casino-border text-slate-800 dark:text-gray-200 text-xs font-bold transition-all flex items-center space-x-1 shadow-sm active:scale-95"
-                  title="Copy raw KHQR string"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-emerald-500">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Copy Code</span>
-                    </>
-                  )}
                 </button>
               </div>
 

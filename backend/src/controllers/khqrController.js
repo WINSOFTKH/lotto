@@ -274,6 +274,7 @@ class KhqrController {
           bakongConfigured: bakongCheck.configured,
           bakongError: bakongCheck.error || null,
           bakongResponse: bakongCheck.responseMessage || null,
+          rateLimited: bakongCheck.rateLimited || false,
           isAdmin: ['admin', 'finance'].includes(userRole),
         }
       });

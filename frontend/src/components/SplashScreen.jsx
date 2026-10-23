@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ShieldCheck, Zap, Trophy } from 'lucide-react';
 
 const LOADING_STEPS = [
-  { progress: 20, text: 'Connecting to KH-Lotto Network...' },
+  { progress: 20, text: 'Connecting to LOTTO 4U Network...' },
   { progress: 45, text: 'Syncing Live Draw Chamber...' },
   { progress: 70, text: 'Validating Wallet & Security...' },
   { progress: 90, text: 'Preparing Tables & Odds...' },
@@ -12,7 +12,7 @@ const LOADING_STEPS = [
 
 export default function SplashScreen({ onFinish, isReady = true, minDuration = 1800 }) {
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('Initializing KH-Lotto Arena...');
+  const [statusText, setStatusText] = useState('Initializing LOTTO 4U Arena...');
   const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
@@ -116,11 +116,11 @@ export default function SplashScreen({ onFinish, isReady = true, minDuration = 1
                     transition={{ repeat: Infinity, duration: 2.5, ease: 'linear' }}
                     className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"
                   />
-                  <span className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-md">
-                    KH
-                  </span>
-                  <span className="text-[9px] font-bold tracking-widest uppercase text-amber-400/80 -mt-0.5">
+                  <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-md">
                     LOTTO
+                  </span>
+                  <span className="text-sm font-black tracking-widest uppercase text-amber-400/90 -mt-1">
+                    4U
                   </span>
                 </div>
               </motion.div>
@@ -134,7 +134,7 @@ export default function SplashScreen({ onFinish, isReady = true, minDuration = 1
                 transition={{ delay: 0.15 }}
                 className="text-2xl sm:text-3xl font-black tracking-wide bg-gradient-to-r from-white via-amber-100 to-yellow-200 bg-clip-text text-transparent"
               >
-                KH-LOTTO ARENA
+                LOTTO 4U ARENA
               </motion.h1>
               <motion.p
                 initial={{ y: 15, opacity: 0 }}

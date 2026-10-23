@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Coins, X, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { LogOut, X, AlertTriangle, ShieldCheck } from 'lucide-react';
+import CoinIcon from './CoinIcon';
+import { formatCoins } from '../utils/formatters';
 
 export default function ExitTableModal({
   isOpen,
@@ -64,14 +66,14 @@ export default function ExitTableModal({
           <div className="bg-amber-50/70 dark:bg-casino-dark/90 border border-amber-300 dark:border-amber-500/30 rounded-2xl p-4 my-5 text-left flex items-center justify-between shadow-sm">
             <div className="flex items-center space-x-3 min-w-0">
               <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/25 to-yellow-500/10 border border-amber-500/40 flex items-center justify-center text-amber-500 dark:text-amber-400 flex-shrink-0">
-                <Coins className="w-6 h-6 animate-pulse" />
+                <CoinIcon className="w-7 h-7 drop-shadow-md" />
               </div>
               <div className="min-w-0">
                 <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold block">
                   Coin Refund
                 </span>
                 <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight truncate block">
-                  +{feeNumber.toLocaleString()} <span className="text-xs font-normal text-amber-700/80 dark:text-amber-200/80">Coins</span>
+                  +{formatCoins(feeNumber)} <span className="text-xs font-normal text-amber-700/80 dark:text-amber-200/80">Coins</span>
                 </span>
               </div>
             </div>

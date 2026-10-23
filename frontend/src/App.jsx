@@ -317,7 +317,7 @@ export default function App() {
           🎰
         </div>
         <div className="text-center space-y-1">
-          <h3 className="text-white font-bold text-base">Entering KH-Lotto Arena...</h3>
+          <h3 className="text-white font-bold text-base">Entering LOTTO 4U Arena...</h3>
           <p className="text-xs text-amber-400 font-mono">Synchronizing Telegram Session</p>
         </div>
       </div>
@@ -338,10 +338,10 @@ export default function App() {
           <div className="absolute -top-20 -left-20 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="text-center mb-6">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-200 flex items-center justify-center font-black text-black text-2xl shadow-lg shadow-amber-500/20 mb-3">
-              KH
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-200 flex items-center justify-center font-black text-black text-xl shadow-lg shadow-amber-500/20 mb-3">
+              4U
             </div>
-            <h1 className="text-2xl font-black text-white">KH-LOTTO ARENA</h1>
+            <h1 className="text-2xl font-black text-white">LOTTO 4U ARENA</h1>
             <p className="text-xs text-gray-400">High-Concurrency Live Real-Time Web Lottery</p>
             {isTelegramWebApp() && (
               <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/40 text-sky-400 font-mono text-[11px] font-bold">

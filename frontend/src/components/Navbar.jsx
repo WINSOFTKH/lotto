@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Coins, Gift, PlusCircle, ArrowUpRight, Shield, LogOut, 
+  Gift, PlusCircle, ArrowUpRight, Shield, LogOut, 
   Menu, X, User, Plus, Headphones, Users, CreditCard, ChevronDown 
 } from 'lucide-react';
 import PlayerAvatar from './PlayerAvatar';
 import ThemeToggle from './ThemeToggle';
+import CoinIcon from './CoinIcon';
 import { formatCoins } from '../utils/formatters';
 
 /**
@@ -79,12 +80,12 @@ export default function Navbar({
           }}
           className="flex items-center space-x-2 cursor-pointer group flex-shrink-0"
         >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-200 flex items-center justify-center font-black text-black text-sm sm:text-lg shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-            KH
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-200 flex items-center justify-center font-black text-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+            4U
           </div>
-          <div>
+          <div className="hidden sm:block">
             <span className="font-black text-base sm:text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors block leading-tight">
-              KH-LOTTO
+              LOTTO 4U
             </span>
             <span className="text-[9px] uppercase tracking-widest text-amber-600 dark:text-amber-400 font-semibold hidden sm:block">
               Live Real-Time Casino
@@ -100,20 +101,17 @@ export default function Navbar({
               {/* Coin Balance Pill */}
               <div 
                 onClick={() => setCurrentView('coins-balance')}
-                className={`flex items-center rounded-full px-4 py-1.5 shadow-sm cursor-pointer transition-all ${
+                className={`flex items-center rounded-full px-3.5 py-1.5 shadow-sm cursor-pointer transition-all ${
                   currentView === 'coins-balance'
                     ? 'bg-amber-100/90 dark:bg-amber-950/60 border-2 border-amber-500 ring-2 ring-amber-400/30'
                     : 'bg-amber-50/80 dark:bg-casino-card border border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-md'
                 }`}
                 title="View Coins Balance & Transaction History"
               >
-                <Coins className="w-4 h-4 text-amber-500 dark:text-amber-400 mr-2" />
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-500 dark:text-gray-400 block -mb-1">Balance</span>
-                  <span className="font-bold text-amber-800 dark:text-amber-400 text-sm tracking-wide">
-                    {formatCoins(user.coinBalance)} <span className="text-xs text-amber-700/80 dark:text-amber-200 font-normal">COINS</span>
-                  </span>
-                </div>
+                <CoinIcon className="w-5 h-5 mr-2" />
+                <span className="font-mono font-black text-amber-800 dark:text-amber-300 text-sm sm:text-base tracking-tight">
+                  {formatCoins(user.coinBalance)}
+                </span>
 
                 {/* Quick Buy Coins Plus */}
                 <button
@@ -122,7 +120,7 @@ export default function Navbar({
                     onOpenTopup();
                   }}
                   title="Buy Coins"
-                  className="ml-3 p-1 rounded-full bg-amber-500/20 hover:bg-amber-500 text-amber-600 dark:text-amber-400 hover:text-black transition-colors"
+                  className="ml-2.5 p-1 rounded-full bg-amber-500/20 hover:bg-amber-500 text-amber-600 dark:text-amber-400 hover:text-black transition-colors"
                 >
                   <PlusCircle className="w-4 h-4" />
                 </button>
@@ -349,7 +347,7 @@ export default function Navbar({
                 }`}
                 title="View Coins Balance & Transaction History"
               >
-                <Coins className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 mr-1.5 flex-shrink-0" />
+                <CoinIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
                 <span className="text-xs font-black font-mono text-amber-800 dark:text-amber-300 mr-1.5">
                   {formatCoins(user.coinBalance)}
                 </span>
@@ -455,7 +453,7 @@ export default function Navbar({
               onClick={() => handleAction(onOpenTopup)}
               className="flex items-center space-x-2 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-xs font-bold transition-colors shadow-sm"
             >
-              <Coins className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+              <CoinIcon className="w-4 h-4" />
               <span>Buy Coins</span>
             </button>
 

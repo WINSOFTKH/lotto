@@ -2,13 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Users,
-  Coins,
   Trophy,
   Clock,
   ShieldCheck,
   Play,
-  Trash2,
-  LogOut,
   Sparkles,
   ArrowRight,
   Zap,
@@ -23,6 +20,7 @@ import PlayerSeat from "../components/PlayerSeat";
 import WinnerModal from "../components/WinnerModal";
 import ExitTableModal from "../components/ExitTableModal";
 import TableChat, { FloatingReactions } from "../components/TableChat";
+import CoinIcon from "../components/CoinIcon";
 import { formatCoins } from "../utils/formatters";
 
 /**
@@ -35,8 +33,8 @@ function isMatchingUser(playerOrId, currentUser) {
       ? playerOrId.user_id !== undefined
         ? playerOrId.user_id
         : playerOrId.userId !== undefined
-        ? playerOrId.userId
-        : playerOrId.id
+          ? playerOrId.userId
+          : playerOrId.id
       : playerOrId;
   const cId = currentUser.id || currentUser.userId || currentUser._id;
 
@@ -73,8 +71,8 @@ function prioritizePlayers(playerList, currentUser, hostId) {
       p.user_id !== undefined
         ? p.user_id
         : p.userId !== undefined
-        ? p.userId
-        : p.id;
+          ? p.userId
+          : p.id;
     if (
       hostId !== undefined &&
       hostId !== null &&
@@ -233,7 +231,9 @@ export default function GameRoom({
       socket.on("table:player_left", (data) => {
         const nextHostId = data.newHostId;
         setPlayers((prev) => {
-          const filtered = prev.filter((p) => String(p.user_id) !== String(data.userId));
+          const filtered = prev.filter(
+            (p) => String(p.user_id) !== String(data.userId),
+          );
           const luckyCount = new Set(filtered.flatMap((p) => p.numbers || []))
             .size;
           setTotalPoolCount(
@@ -243,7 +243,9 @@ export default function GameRoom({
           );
           const mapped = filtered.map((p, idx) => ({
             ...p,
-            isHost: nextHostId ? String(p.user_id) === String(nextHostId) : idx === 0,
+            isHost: nextHostId
+              ? String(p.user_id) === String(nextHostId)
+              : idx === 0,
           }));
           return prioritizePlayers(mapped, user, nextHostId);
         });
@@ -733,7 +735,9 @@ export default function GameRoom({
       setError("");
       setActiveRedirectTableId(null);
       setTable(data.table);
-      setPlayers(prioritizePlayers(data.players || [], user, data.table?.host_id));
+      setPlayers(
+        prioritizePlayers(data.players || [], user, data.table?.host_id),
+      );
       const luckyCount = new Set(
         (data.players || []).flatMap((p) => p.numbers || []),
       ).size;
@@ -1029,7 +1033,9 @@ export default function GameRoom({
 
   // Host Player logic: table.host_id has highest priority, fallback to first seated player
   const hostPlayer = table?.host_id
-    ? sortedPlayers.find((p) => String(p.user_id || p.userId) === String(table.host_id)) || {
+    ? sortedPlayers.find(
+        (p) => String(p.user_id || p.userId) === String(table.host_id),
+      ) || {
         username: table.host_username || "Host",
         user_id: table.host_id,
       }
@@ -1046,97 +1052,57 @@ export default function GameRoom({
   const rightPlayers = sortedPlayers.slice(half);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-4 py-2.5 sm:py-6 space-y-2.5 sm:space-y-6">
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-casino-card border border-slate-200 dark:border-casino-border rounded-2xl p-3 sm:p-4 shadow-sm">
-        <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
-          <button
-            onClick={handleBackNavigation}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-casino-dark hover:bg-slate-200 dark:hover:bg-casino-border border border-slate-200 dark:border-casino-border text-slate-700 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors flex-shrink-0"
-            title="Back to Lobby"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <div className="min-w-0">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate max-w-[130px] sm:max-w-none">
-                {table.name}
-              </h2>
-              <span
-                className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                  table.status === "playing"
-                    ? "bg-rose-500/20 text-rose-500 dark:text-rose-400 border-rose-500/40 animate-pulse"
-                    : table.status === "completed"
-                      ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/40"
-                      : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
-                }`}
-              >
-                {table.status}
-              </span>
-              {!isUserSeated && (
-                <span className="inline-flex items-center space-x-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-500/40 shadow-sm animate-pulse">
-                  <Eye className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                  <span>Watch Only</span>
+      <div className="bg-white dark:bg-casino-card border border-slate-200 dark:border-casino-border rounded-2xl p-2.5 sm:p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: Back Button + Table Info */}
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <button
+              onClick={handleBackNavigation}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-casino-dark hover:bg-slate-200 dark:hover:bg-casino-border border border-slate-200 dark:border-casino-border text-slate-700 dark:text-gray-400 hover:text-black dark:hover:text-white transition-all active:scale-95 flex-shrink-0"
+              title="Back to Lobby"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <h2
+                  className="text-sm sm:text-lg font-black text-slate-900 dark:text-white truncate"
+                  title={table.name}
+                >
+                  {table.name}
+                </h2>
+                <span
+                  className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                    table.status === "playing"
+                      ? "bg-rose-500/20 text-rose-500 dark:text-rose-400 border-rose-500/40 animate-pulse"
+                      : table.status === "completed"
+                        ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/40"
+                        : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
+                  }`}
+                >
+                  {table.status}
                 </span>
-              )}
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-gray-400 font-mono mt-0.5">
+                <span>Room: #{table.id.slice(0, 8)}</span>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-gray-400 font-mono">
-              Room: {table.id.slice(0, 8)}
-            </span>
           </div>
-        </div>
 
-        {/* Prize Pool Display, Exit Table & Delete Button */}
-        <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap sm:flex-nowrap justify-end">
-          {/* Exit Table Button before game starts */}
-          {isUserSeated && table.status === "waiting" && (
-            <button
-              onClick={() => setShowExitModal(true)}
-              disabled={leaving}
-              className="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-600/20 hover:bg-rose-100 dark:hover:bg-rose-600/30 border border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300 font-bold text-xs transition-colors disabled:opacity-50 shadow-sm"
-              title="Exit table and refund entry fee"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>{leaving ? "Exiting..." : "Exit"}</span>
-            </button>
-          )}
-
-          {/* Exit Room when game completed */}
-          {table.status === "completed" && (
-            <button
-              onClick={handleJoinOtherTable}
-              className="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-800 dark:text-gray-200 font-bold text-xs transition-colors shadow-sm"
-              title="Exit room and choose other table"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Exit Table</span>
-            </button>
-          )}
-
-          {/* Delete Empty Table Button */}
-          {players.length === 0 &&
-            (user?.id === table.created_by || user?.role === "admin") && (
-              <button
-                onClick={handleDeleteTable}
-                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-500 dark:text-red-400 font-bold text-xs transition-colors"
-                title="Delete Empty Table"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
-              </button>
-            )}
-
-          <div className="text-right pl-2">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 block -mb-0.5">
-              Winner Prize
-            </span>
-            <div className="flex items-baseline justify-end space-x-1">
-              <span className="text-xl sm:text-2xl md:text-3xl font-black font-mono tracking-tight text-amber-500 dark:text-amber-400 drop-shadow-sm">
-                {formatCoins(winnerPrize)}
+          {/* Right: Prize Pool Display */}
+          <div className="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
+            <div className="text-right pl-2.5 sm:pl-3 border-l border-slate-200 dark:border-casino-border/60 flex-shrink-0">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block -mb-0.5">
+                🏆 Prize Pool
               </span>
-              <span className="text-[11px] sm:text-xs font-black text-amber-600/90 dark:text-amber-300 uppercase">
-                Coins
-              </span>
+              <div className="flex items-center justify-end space-x-1 sm:space-x-1.5">
+                <span className="text-base sm:text-2xl md:text-3xl font-black font-mono tracking-tight text-amber-500 dark:text-amber-400 drop-shadow-sm leading-tight">
+                  {formatCoins(winnerPrize)}
+                </span>
+                <CoinIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 drop-shadow-sm" />
+              </div>
             </div>
           </div>
         </div>
@@ -1182,30 +1148,38 @@ export default function GameRoom({
 
       {/* Watch Only Spectator Status Banner */}
       {!isUserSeated && (
-        <div className="bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-purple-500/15 border border-purple-400/40 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-600 dark:text-purple-300 flex items-center justify-center flex-shrink-0">
+        <div className="bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-purple-500/15 border border-purple-400/40 rounded-2xl p-3 sm:p-3.5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-300 flex items-center justify-center flex-shrink-0 shadow-sm border border-purple-400/30">
               <Eye className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-purple-900 dark:text-purple-200 block truncate">
-                Watch Only Mode
-              </span>
-              <span className="text-[11px] text-slate-600 dark:text-gray-400 block truncate">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center space-x-1.5">
+                <span className="text-xs sm:text-sm font-black text-purple-900 dark:text-purple-200 block">
+                  Watch Only Mode
+                </span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-400/30">
+                  Spectator
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-gray-400 leading-tight mt-0.5">
                 {table.status === "playing"
-                  ? "You are watching this live game as a spectator (not participating in this round)."
-                  : "You are currently watching this room without a seat. Take a seat anytime to play!"}
-              </span>
+                  ? "Watching live game as a spectator."
+                  : "You are currently watching without a seat. Take a seat to play!"}
+              </p>
             </div>
           </div>
+
           {table.status === "waiting" && table.current_players < maxPlayers && (
             <button
               onClick={handleJoinThisTable}
               disabled={joining}
-              className="px-3 py-1.5 rounded-xl font-black text-xs bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black flex items-center space-x-1.5 shadow-md shadow-amber-500/20 flex-shrink-0 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-500/20 flex-shrink-0 sm:self-center transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 whitespace-nowrap"
             >
-              <Zap className="w-3.5 h-3.5 fill-black" />
-              <span>Join Game</span>
+              <Zap className="w-4 h-4 fill-slate-950" />
+              <span className="inline-flex items-center gap-1.5">
+                Join Game
+              </span>
             </button>
           )}
         </div>
@@ -1280,21 +1254,12 @@ export default function GameRoom({
           {table.status === "waiting" &&
             (players.length >= 2 ? (
               <div className="bg-gradient-to-r from-emerald-500/10 via-white to-emerald-500/10 dark:from-emerald-950/40 dark:via-casino-card dark:to-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 text-center shadow-md dark:shadow-lg space-y-3">
-                <div className="flex items-center justify-between text-xs font-semibold px-1">
+                <div className="flex items-center justify-center text-xs font-semibold px-1">
                   <span className="text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5 font-bold">
                     <Users className="w-4 h-4" />
                     <span>
                       Ready to Play! ({players.length} Players Seated)
                     </span>
-                  </span>
-                  <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                    Winner Prize:{" "}
-                    <strong className="text-sm sm:text-base font-black font-mono text-amber-500 dark:text-amber-300">
-                      {formatCoins(
-                        Math.floor(table.entry_fee * players.length * 0.9),
-                      )}{" "}
-                      Coins
-                    </strong>
                   </span>
                 </div>
 
@@ -1361,30 +1326,6 @@ export default function GameRoom({
               </div>
             ))}
 
-          {/* Join Table Callout if not full and not joined */}
-          {!isUserSeated && table.status === "waiting" && (
-            <div className="bg-white dark:bg-casino-card border border-amber-400/50 dark:border-amber-500/30 rounded-2xl p-5 text-center shadow-lg dark:shadow-xl space-y-3">
-              <div>
-                <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                  Seats Available ({table.current_players}/{maxPlayers})
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-gray-400">
-                  Join now for {table.entry_fee} Coins to receive your unique
-                  5-digit lucky ticket!
-                </p>
-              </div>
-              <button
-                onClick={handleJoinThisTable}
-                disabled={joining}
-                className="w-full py-3.5 rounded-xl font-black text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:from-amber-400 hover:to-yellow-200 text-black shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
-              >
-                {joining
-                  ? "Taking Seat..."
-                  : `Join Seat (${table.entry_fee} Coins)`}
-              </button>
-            </div>
-          )}
-
           {/* Post-Game Controls when status === 'completed': 2 Options */}
           {table.status === "completed" && (
             <div className="bg-gradient-to-r from-amber-50/80 via-white to-amber-50/80 dark:from-amber-950/40 dark:via-casino-card dark:to-amber-950/40 border border-amber-400/50 dark:border-amber-500/40 rounded-2xl p-5 text-center shadow-lg dark:shadow-xl space-y-3">
@@ -1395,12 +1336,13 @@ export default function GameRoom({
                     {returnToLobbySeconds !== null && returnToLobbySeconds > 0
                       ? `Match Finished • Returning to Lobby in ${returnToLobbySeconds}s`
                       : autoRejoinSeconds !== null && autoRejoinSeconds > 0
-                      ? `Match Finished • Auto Re-Joining in ${autoRejoinSeconds}s`
-                      : "Match Finished"}
+                        ? `Match Finished • Auto Re-Joining in ${autoRejoinSeconds}s`
+                        : "Match Finished"}
                   </span>
                 </span>
-                <span className="text-amber-600 dark:text-amber-300 font-mono text-[11px] font-bold">
-                  {table.entry_fee} Coins / Seat
+                <span className="text-amber-600 dark:text-amber-300 font-mono text-[11px] font-bold inline-flex items-center gap-1">
+                  <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                  {formatCoins(table.entry_fee)} / Seat
                 </span>
               </div>
 
@@ -1416,7 +1358,8 @@ export default function GameRoom({
                         Returning to Lobby in {returnToLobbySeconds}s...
                       </span>
                       <span className="text-[10px] text-slate-600 dark:text-gray-400 block truncate">
-                        Click Re-Join Table to stay and play, or return to lobby.
+                        Click Re-Join Table to stay and play, or return to
+                        lobby.
                       </span>
                     </div>
                   </div>
@@ -1441,8 +1384,10 @@ export default function GameRoom({
                       <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-amber-300 block truncate">
                         Auto Re-Joining Table in {autoRejoinSeconds}s...
                       </span>
-                      <span className="text-[10px] text-slate-600 dark:text-gray-400 block truncate">
-                        {table.entry_fee} Coins will be deducted for next round
+                      <span className="text-[10px] text-slate-600 dark:text-gray-400 flex items-center gap-1 truncate">
+                        <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                        {formatCoins(table.entry_fee)} will be deducted for next
+                        round
                       </span>
                     </div>
                   </div>
@@ -1464,12 +1409,22 @@ export default function GameRoom({
                   className="flex-1 py-3.5 px-4 rounded-xl font-black text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:from-amber-400 hover:to-yellow-200 text-black shadow-lg shadow-amber-500/25 flex items-center justify-center space-x-2 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
                 >
                   <Zap className="w-4 h-4 fill-black" />
-                  <span>
-                    {joiningCurrent
-                      ? "Taking Seat..."
-                      : autoRejoinSeconds !== null && autoRejoinSeconds > 0
-                        ? `⚡ Re-Join Now (${table.entry_fee} Coins)`
-                        : `⚡ Re-Join Table (${table.entry_fee} Coins)`}
+                  <span className="inline-flex items-center gap-1">
+                    {joiningCurrent ? (
+                      "Taking Seat..."
+                    ) : autoRejoinSeconds !== null && autoRejoinSeconds > 0 ? (
+                      <>
+                        ⚡ Re-Join Now (
+                        <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                        {formatCoins(table.entry_fee)})
+                      </>
+                    ) : (
+                      <>
+                        ⚡ Re-Join Table (
+                        <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                        {formatCoins(table.entry_fee)})
+                      </>
+                    )}
                   </span>
                 </button>
 
@@ -1515,15 +1470,19 @@ export default function GameRoom({
                   Table Seats ({players.length}/{maxPlayers})
                 </span>
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-gray-500 font-medium">
-                {players.length >= 2 ? "Ready to play" : "Min 2 to start"}
-              </span>
             </div>
 
             {sortedPlayers.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div
+                className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                }}
+              >
                 {sortedPlayers.map((player, idx) => {
-                  const seatNum = player.seat_number || player.seatNumber || idx + 1;
+                  const seatNum =
+                    player.seat_number || player.seatNumber || idx + 1;
                   const pId = player.user_id || player.userId || player.id;
                   const isPlayerHost =
                     (table?.host_id && String(pId) === String(table.host_id)) ||
@@ -1571,7 +1530,8 @@ export default function GameRoom({
             </span>
           )}
           {rightPlayers.map((player, idx) => {
-            const seatNum = player.seat_number || player.seatNumber || idx + 1 + half;
+            const seatNum =
+              player.seat_number || player.seatNumber || idx + 1 + half;
             const pId = player.user_id || player.userId || player.id;
             const isPlayerHost =
               (table?.host_id && String(pId) === String(table.host_id)) ||

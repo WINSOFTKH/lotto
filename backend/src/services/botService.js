@@ -11,58 +11,62 @@ const tableTargetBotCounts = new Map();
 const BOT_JOIN_INTERVAL_MS = 5000;
 
 // Predefined realistic Cambodian bot player profiles (200 players)
+// Formatted as "First Last" with a space (e.g. "Sok San", "Chan Dara", "Chea Visal")
 const BOT_PROFILES = [
-  // 1-50: Popular Cambodian Full Names (Surname + Given Name)
-  'Sokha_Chantha', 'Dara_Visal', 'Pisey_Sreypov', 'Rithy_Makara', 'Sopheak_Sovann',
-  'Bunroeun_Kosal', 'Chenda_Rothana', 'Malis_Bopha', 'Vicheka_Samnang', 'Khemara_Panha',
-  'Leakhena_Nary', 'Theara_Piseth', 'Sreyneang_Pich', 'Vannak_Ratanak', 'Sovannarith_Kiri',
-  'Virak_Boran', 'Kunthea_Socheata', 'Mengly_Chhaya', 'Sreymom_Davy', 'Phearith_Vibol',
-  'Sothea_Chanthou', 'Romdoul_Phalla', 'Vichet_Narith', 'Daneth_Kalyan', 'Reasmey_Thida',
-  'Sreynich_Vathana', 'Heng_Sokha', 'Chan_Dara', 'Chea_Visal', 'Lim_Pisey',
-  'Keo_Rithy', 'Meas_Makara', 'Seng_Sopheak', 'Ouk_Bunroeun', 'Pich_Chenda',
-  'Long_Malis', 'Tep_Vicheka', 'Sar_Khemara', 'Chhay_Leakhena', 'Bun_Theara',
-  'Sun_Sreyneang', 'Ly_Vannak', 'Ung_Sovannarith', 'Vong_Virak', 'Kim_Kunthea',
-  'San_Mengly', 'Yin_Sreymom', 'Mao_Phearith', 'Khun_Sothea', 'Prak_Romdoul',
+  // 1-50
+  'Sok San', 'Chan Dara', 'Chea Visal', 'Heng Pisey', 'Lim Rithy',
+  'Keo Makara', 'Meas Sopheak', 'Seng Sovann', 'Ouk Kosal', 'Pich Rothana',
+  'Long Samnang', 'Tep Panha', 'Sar Nary', 'Chhay Piseth', 'Bun Pich',
+  'Sun Ratanak', 'Ly Kiri', 'Ung Boran', 'Vong Socheata', 'Kim Chhaya',
+  'San Vibol', 'Yin Narith', 'Mao Kalyan', 'Khun Thida', 'Prak Vathana',
+  'Tuy Chantha', 'Chhin Sreypov', 'Huy Bunroeun', 'Mom Chenda', 'Pen Malis',
+  'Suos Bopha', 'Yim Vicheka', 'Ros Khemara', 'Som Leakhena', 'Nou Theara',
+  'Men Sreyneang', 'Tea Vannak', 'Kong Sovannarith', 'Chhun Virak', 'Khorn Kunthea',
+  'Sok Boran', 'Chan Socheata', 'Chea Chhaya', 'Heng Vibol', 'Lim Narith',
+  'Keo Kalyan', 'Meas Thida', 'Seng Vathana', 'Ouk Chantha', 'Pich Sreypov',
 
-  // 51-100: Classical & Modern Khmer Name Pairings
-  'Tuy_Vichet', 'Chhin_Daneth', 'Huy_Reasmey', 'Mom_Sreynich', 'Pen_Davy',
-  'Suos_Chanthou', 'Yim_Phalla', 'Sok_Bopha', 'Chan_Kosal', 'Chea_Rothana',
-  'Heng_Samnang', 'Lim_Panha', 'Keo_Nary', 'Meas_Piseth', 'Seng_Pich',
-  'Ouk_Ratanak', 'Pich_Kiri', 'Long_Boran', 'Tep_Socheata', 'Sar_Chhaya',
-  'Chhay_Vibol', 'Bun_Narith', 'Sun_Kalyan', 'Ly_Thida', 'Ung_Vathana',
-  'Vong_Sreypov', 'Kim_Makara', 'San_Visal', 'Yin_Dara', 'Mao_Sokha',
-  'Khun_Pisey', 'Prak_Rithy', 'Tuy_Sopheak', 'Chhin_Bunroeun', 'Huy_Chenda',
-  'Mom_Malis', 'Pen_Vicheka', 'Suos_Khemara', 'Yim_Leakhena', 'Sok_Theara',
-  'Chan_Sreyneang', 'Chea_Vannak', 'Heng_Sovannarith', 'Lim_Virak', 'Keo_Kunthea',
-  'Meas_Mengly', 'Seng_Sreymom', 'Ouk_Phearith', 'Pich_Sothea', 'Long_Romdoul',
+  // 51-100
+  'Long Bunroeun', 'Tep Chenda', 'Sar Malis', 'Chhay Bopha', 'Bun Vicheka',
+  'Sun Khemara', 'Ly Leakhena', 'Ung Theara', 'Vong Sreyneang', 'Kim Vannak',
+  'San Sovannarith', 'Yin Virak', 'Mao Kunthea', 'Khun Mengly', 'Prak Sreymom',
+  'Tuy Phearith', 'Chhin Sothea', 'Huy Romdoul', 'Mom Vichet', 'Pen Daneth',
+  'Suos Reasmey', 'Yim Sreynich', 'Ros Chanthou', 'Som Phalla', 'Nou Channa',
+  'Men Chamroeun', 'Tea Ravy', 'Kong Kompheak', 'Chhun Maneth', 'Khorn Vanny',
+  'Sok Theara', 'Chan Sreyneang', 'Chea Vannak', 'Heng Sovannarith', 'Lim Virak',
+  'Keo Kunthea', 'Meas Mengly', 'Seng Sreymom', 'Ouk Phearith', 'Pich Sothea',
+  'Long Romdoul', 'Tep Vichet', 'Sar Daneth', 'Chhay Reasmey', 'Bun Sreynich',
+  'Sun Chanthou', 'Ly Phalla', 'Ung Channa', 'Vong Chamroeun', 'Kim Ravy',
 
-  // 101-150: Common Everyday Cambodian Usernames with Lucky Digits & Locations
-  'Tep_Vichet', 'Sar_Daneth', 'Chhay_Reasmey', 'Bun_Sreynich', 'Sun_Bopha',
-  'Ly_Kosal', 'Ung_Rothana', 'Vong_Samnang', 'Kim_Panha', 'San_Nary',
-  'Yin_Piseth', 'Mao_Pich', 'Khun_Ratanak', 'Prak_Kiri', 'Tuy_Boran',
-  'Chhin_Socheata', 'Huy_Chhaya', 'Mom_Vibol', 'Pen_Narith', 'Suos_Kalyan',
-  'Yim_Thida', 'Dara_168', 'Sokha_PP', 'Pisey_SR', 'Rithy_88',
-  'Makara_777', 'Sopheak_168', 'Bunroeun_BTB', 'Chenda_99', 'Malis_Angkor',
-  'Vicheka_888', 'Khemara_168', 'Leakhena_KH', 'Theara_777', 'Sreyneang_99',
-  'Vannak_168', 'Sovannarith_SR', 'Virak_88', 'Kunthea_PP', 'Mengly_168',
-  'Sreymom_KH', 'Phearith_777', 'Sothea_99', 'Romdoul_SR', 'Vichet_168',
-  'Daneth_PP', 'Reasmey_88', 'Sreynich_KH', 'Bopha_168', 'Kosal_777',
+  // 101-150
+  'San Kompheak', 'Yin Maneth', 'Mao Vanny', 'Khun Sovannara', 'Prak Sokunthea',
+  'Tuy Chandara', 'Chhin Phanith', 'Huy Ratana', 'Mom Tola', 'Pen Chhay',
+  'Suos Dalis', 'Yim Sinat', 'Ros Sreyleak', 'Som Vathanak', 'Nou Borey',
+  'Men Kanha', 'Tea Sokhom', 'Kong Sambo', 'Chhun Chanthea', 'Khorn Somaly',
+  'Sok Channa', 'Chan Chamroeun', 'Chea Ravy', 'Heng Kompheak', 'Lim Maneth',
+  'Keo Vanny', 'Meas Sovannara', 'Seng Sokunthea', 'Ouk Chandara', 'Pich Phanith',
+  'Long Ratana', 'Tep Tola', 'Sar Chhay', 'Chhay Dalis', 'Bun Sinat',
+  'Sun Sreyleak', 'Ly Vathanak', 'Ung Borey', 'Vong Kanha', 'Kim Sokhom',
+  'San Sambo', 'Yin Chanthea', 'Mao Somaly', 'Khun Vireak', 'Prak Monineath',
+  'Tuy Rathana', 'Chhin Dalin', 'Huy Sreylin', 'Mom Phearun', 'Pen Bunnath',
 
-  // 151-200: Elegant Cambodian Names & Popular User Profiles
-  'Rothana_99', 'Samnang_168', 'Panha_SR', 'Nary_88', 'Piseth_PP',
-  'Pich_168', 'Ratanak_777', 'Kiri_99', 'Boran_SR', 'Socheata_168',
-  'Chhaya_PP', 'Vibol_88', 'Narith_777', 'Kalyan_99', 'Thida_168',
-  'Vathana_SR', 'Sreypov_88', 'Heng_Heang168', 'Chan_Channa', 'Chea_Chamroeun',
-  'Lim_Ravy', 'Keo_Kompheak', 'Meas_Maneth', 'Seng_Vanny', 'Ouk_Sovannara',
-  'Pich_Sokunthea', 'Long_Chandara', 'Tep_Phanith', 'Sar_Ratana', 'Chhay_Tola',
-  'Bun_Chhay', 'Sun_Dalis', 'Ly_Sinat', 'Ung_Sreyleak', 'Vong_Vathanak',
-  'Kim_Borey', 'San_Kanha', 'Yin_Sokhom', 'Mao_Sambo', 'Khun_Chanthea',
-  'Prak_Somaly', 'Tuy_Vireak', 'Chhin_Monineath', 'Huy_Rathana', 'Mom_Dalin',
-  'Pen_Sreylin', 'Suos_Phearun', 'Yim_Bunnath', 'Sok_Voleak', 'Chan_Sovanratana'
-].map((username) => ({
-  username,
-  email: `${username.toLowerCase().replace(/[^a-z0-9_]/g, '')}@kh-lotto.bot`,
-}));
+  // 151-200
+  'Suos Voleak', 'Yim Sovanratana', 'Ros Ratanaka', 'Som Chetra', 'Nou Oudom',
+  'Men Channarith', 'Tea Sopheap', 'Kong Sokun', 'Chhun Vanna', 'Khorn Sovan',
+  'Sok Borey', 'Chan Kanha', 'Chea Sokhom', 'Heng Sambo', 'Lim Chanthea',
+  'Keo Somaly', 'Meas Vireak', 'Seng Monineath', 'Ouk Rathana', 'Pich Dalin',
+  'Long Sreylin', 'Tep Phearun', 'Sar Bunnath', 'Chhay Voleak', 'Bun Sovanratana',
+  'Sun Ratanaka', 'Ly Chetra', 'Ung Oudom', 'Vong Channarith', 'Kim Sopheap',
+  'San Sokun', 'Yin Vanna', 'Mao Sovan', 'Khun Sambath', 'Prak Serey',
+  'Tuy Raksmey', 'Chhin Kolab', 'Huy Sitha', 'Mom Pharith', 'Pen Sophat',
+  'Suos Dararith', 'Yim Botum', 'Ros San', 'Som Dara', 'Nou Visal',
+  'Men Pisey', 'Tea Rithy', 'Kong Makara', 'Chhun Sopheak', 'Khorn Sovann'
+].map((username, index) => {
+  const emailSlug = username.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '');
+  return {
+    username,
+    email: `${emailSlug}.${index + 1}@lotto4u.bot`,
+  };
+});
 
 let schemaInitialized = false;
 

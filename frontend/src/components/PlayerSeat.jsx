@@ -67,7 +67,7 @@ export default function PlayerSeat({
       </AnimatePresence>
       {/* Top Micro-Row: Avatar, Username, Badges & Matches count */}
       <div className="flex items-center justify-between gap-1 leading-none mb-1 sm:mb-1.5">
-        <div className="flex items-center space-x-1 sm:space-x-1.5 min-w-0">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 min-w-0 flex-1">
           <PlayerAvatar
             photoUrl={photoUrl}
             username={player.username}
@@ -84,22 +84,22 @@ export default function PlayerSeat({
             }
           />
 
-          <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-gray-200 truncate max-w-[42px] sm:max-w-[80px]" title={player.username}>
+          <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-gray-200 truncate min-w-0 max-w-[92px] xs:max-w-[125px] sm:max-w-[160px]" title={player.username}>
             {player.username}
           </span>
 
           {isPlayerHost && (
             <span 
-              className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500/25 to-yellow-500/20 dark:from-amber-500/30 dark:to-yellow-500/25 text-amber-800 dark:text-amber-300 border border-amber-400/50 flex items-center space-x-0.5 flex-shrink-0 shadow-sm"
+              className="text-[8px] sm:text-[9px] font-black px-1 py-0.5 rounded bg-gradient-to-r from-amber-500/25 to-yellow-500/20 dark:from-amber-500/30 dark:to-yellow-500/25 text-amber-800 dark:text-amber-300 border border-amber-400/50 flex items-center space-x-0.5 flex-shrink-0 shadow-sm"
               title="Table Host"
             >
               <Crown className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400 fill-amber-500" />
-              <span>HOST</span>
+              <span className="hidden xs:inline">HOST</span>
             </span>
           )}
 
           {isCurrentUser && (
-            <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded bg-cyan-500 text-white dark:text-slate-950 flex-shrink-0 uppercase font-mono shadow-sm">
+            <span className="text-[8px] sm:text-[9px] font-black px-1 py-0.5 rounded bg-cyan-500 text-white dark:text-slate-950 flex-shrink-0 uppercase font-mono shadow-sm">
               YOU
             </span>
           )}
@@ -126,7 +126,7 @@ export default function PlayerSeat({
       </div>
 
       {/* 5 Compact Lottery Numbers - Circle Round */}
-      <div className="grid grid-cols-5 gap-1 items-center justify-items-center">
+      <div className="flex items-center justify-center space-x-1 sm:space-x-1.5 mt-1">
         {numbers.map((num, i) => {
           const isMatched = drawnSet.has(num);
           return (
@@ -134,7 +134,7 @@ export default function PlayerSeat({
               key={i}
               animate={isMatched ? { scale: [1, 1.15, 1] } : {}}
               transition={{ duration: 0.2 }}
-              className={`w-[22px] h-[22px] sm:w-[26px] sm:h-[26px] aspect-square rounded-full flex items-center justify-center font-mono font-black text-[10px] sm:text-[11px] transition-all ${
+              className={`w-[22px] h-[22px] xs:w-[25px] xs:h-[25px] sm:w-[28px] sm:h-[28px] aspect-square rounded-full flex items-center justify-center font-mono font-black text-[10px] xs:text-[11px] sm:text-xs transition-all ${
                 isMatched
                   ? 'bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-black shadow-md shadow-amber-500/50 ring-1 ring-yellow-200'
                   : 'bg-slate-100 dark:bg-casino-dark/95 border border-slate-300 dark:border-casino-border text-slate-800 dark:text-gray-300 shadow-inner'

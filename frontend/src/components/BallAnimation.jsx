@@ -21,19 +21,19 @@ export default function BallAnimation({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gradient-to-b dark:from-casino-card dark:to-casino-dark border border-slate-200 dark:border-casino-border rounded-3xl shadow-xl dark:shadow-2xl relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center p-3.5 sm:p-6 bg-white dark:bg-gradient-to-b dark:from-casino-card dark:to-casino-dark border border-slate-200 dark:border-casino-border rounded-2xl sm:rounded-3xl shadow-lg dark:shadow-2xl relative overflow-hidden">
       {/* Decorative radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-64 h-48 sm:h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Title */}
-      <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-2">
+      <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1.5 sm:mb-2">
         {isDrawing
           ? `🎰 LIVE DRAW IN PROGRESS (1 - 99)`
           : "🎱 LOTTERY DRAW CHAMBER"}
       </span>
 
       {/* Main Ball Display */}
-      <div className="relative w-36 h-36 flex items-center justify-center my-3">
+      <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center my-2 sm:my-3">
         {/* Outer glowing pulse rings */}
         {isDrawing && (
           <div className="absolute inset-0 rounded-full border border-amber-500/40 animate-ping pointer-events-none" />
@@ -48,14 +48,14 @@ export default function BallAnimation({
               animate={{ scale: 1, rotate: 0, y: 0 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 350, damping: 20 }}
-              className={`w-28 h-28 rounded-full bg-gradient-to-tr ${getBallColor(currentBall)} border-4 shadow-2xl flex flex-col items-center justify-center relative select-none`}
+              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr ${getBallColor(currentBall)} border-3 sm:border-4 shadow-2xl flex flex-col items-center justify-center relative select-none`}
             >
               {/* Spherical specular highlight */}
-              <div className="absolute top-2 left-4 w-7 h-4 bg-white/40 rounded-full transform -rotate-45 blur-[1px]" />
-              <span className="text-4xl font-black tracking-tight">
+              <div className="absolute top-2 left-3 sm:left-4 w-6 sm:w-7 h-3.5 sm:h-4 bg-white/40 rounded-full transform -rotate-45 blur-[1px]" />
+              <span className="text-3xl sm:text-4xl font-black tracking-tight">
                 {currentBall}
               </span>
-              <span className="text-[9px] font-bold tracking-widest uppercase opacity-75">
+              <span className="text-[8px] sm:text-[9px] font-bold tracking-widest uppercase opacity-75">
                 KH-BALL
               </span>
             </motion.div>
@@ -63,7 +63,7 @@ export default function BallAnimation({
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-              className="w-24 h-24 rounded-full border-4 border-dashed border-slate-300 dark:border-gray-700 flex items-center justify-center text-slate-400 dark:text-gray-500 font-bold text-xs"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-3 sm:border-4 border-dashed border-slate-300 dark:border-gray-700 flex items-center justify-center text-slate-400 dark:text-gray-500 font-bold text-[11px] sm:text-xs"
             >
               WAITING
             </motion.div>
@@ -72,7 +72,7 @@ export default function BallAnimation({
       </div>
 
       {/* Drawn Balls Roll History */}
-      <div className="w-full mt-4 bg-slate-50 dark:bg-casino-dark/80 border border-slate-200 dark:border-casino-border/60 rounded-2xl p-3 shadow-inner">
+      <div className="w-full mt-2.5 sm:mt-4 bg-slate-50 dark:bg-casino-dark/80 border border-slate-200 dark:border-casino-border/60 rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-inner">
         <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-gray-400 font-semibold mb-2 px-1">
           <div className="flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

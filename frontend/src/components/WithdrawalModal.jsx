@@ -134,7 +134,7 @@ export default function WithdrawalModal({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3.5 right-3.5 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+            className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -145,8 +145,8 @@ export default function WithdrawalModal({
               <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-lg sm:text-xl font-bold text-white">Sell Coins to Cash</h3>
-              <p className="text-xs text-gray-400">Transfer payout directly to your saved Payment Method</p>
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Sell Coins to Cash</h3>
+              <p className="text-xs text-slate-500 dark:text-gray-400">Transfer payout directly to your saved Payment Method</p>
             </div>
           </div>
 
@@ -165,19 +165,19 @@ export default function WithdrawalModal({
           )}
 
           {configLoading ? (
-            <div className="py-10 text-center text-xs text-gray-400">
+            <div className="py-10 text-center text-xs text-slate-500 dark:text-gray-400">
               Loading your saved payment methods...
             </div>
           ) : paymentMethods.length === 0 ? (
             /* Prompt to set up Payment Method once */
-            <div className="bg-casino-dark border border-amber-500/40 rounded-2xl p-5 text-center space-y-3">
+            <div className="bg-slate-50 dark:bg-casino-dark border border-amber-500/40 rounded-2xl p-5 text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 mx-auto flex items-center justify-center text-amber-400">
                 <CreditCard className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-white">No Payment Method Set Up Yet</h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Set up your receiving bank account once in <strong className="text-amber-400">Payment Method</strong>, and you can sell coins anytime with a single click.
+                <h4 className="text-sm font-black text-slate-900 dark:text-white">No Payment Method Set Up Yet</h4>
+                <p className="text-xs text-slate-500 dark:text-gray-400 leading-relaxed">
+                  Set up your receiving bank account once in <strong className="text-amber-500 dark:text-amber-400">Payment Method</strong>, and you can sell coins anytime with a single click.
                 </p>
               </div>
               <button
@@ -199,7 +199,7 @@ export default function WithdrawalModal({
               {/* Saved Payment Method Selector */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
                     Receiving Bank Account:
                   </label>
                   {onNavigatePaymentMethods && (
@@ -209,7 +209,7 @@ export default function WithdrawalModal({
                         onClose();
                         onNavigatePaymentMethods();
                       }}
-                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1"
+                      className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center space-x-1"
                     >
                       <CreditCard className="w-3 h-3" />
                       <span>Edit Payment Method</span>
@@ -224,7 +224,7 @@ export default function WithdrawalModal({
                       <div
                         key={m.id}
                         onClick={() => setSelectedMethodId(m.id)}
-                        className="rounded-xl p-3 border bg-emerald-500/15 border-emerald-500/60 ring-1 ring-emerald-500/30 flex items-center justify-between gap-2.5"
+                        className="rounded-xl p-3 border bg-emerald-500/10 dark:bg-emerald-500/15 border-emerald-500/50 dark:border-emerald-500/60 ring-1 ring-emerald-500/20 dark:ring-emerald-500/30 flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
                       >
                         <div className="flex items-center space-x-3 min-w-0">
                           {(() => {
@@ -234,19 +234,19 @@ export default function WithdrawalModal({
                           })()}
                           <div className="min-w-0">
                             <div className="flex items-center space-x-1.5">
-                              <span className="text-xs font-black text-white truncate">{m.bank_name}</span>
-                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-bold">
+                              <span className="text-xs font-black text-slate-900 dark:text-white truncate">{m.bank_name}</span>
+                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[9px] font-bold">
                                 <span>Linked</span>
                               </span>
                             </div>
-                            <div className="text-xs font-mono font-bold text-amber-400 mt-0.5 truncate">
-                              {m.account_number} • <span className="font-sans text-gray-300">{m.account_name}</span>
+                            <div className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5 truncate">
+                              {m.account_number} • <span className="font-sans text-slate-700 dark:text-gray-300 font-semibold">{m.account_name}</span>
                             </div>
                           </div>
                         </div>
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                            isSelected ? 'border-emerald-400 bg-emerald-500 text-black' : 'border-gray-600'
+                            isSelected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 dark:border-gray-600'
                           }`}
                         >
                           {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -259,11 +259,11 @@ export default function WithdrawalModal({
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
                     Coins to Sell:
                   </label>
-                  <span className="text-xs text-gray-400">
-                    Available: <strong className="text-amber-400">{currentBalance?.toLocaleString()}</strong>
+                  <span className="text-xs text-slate-500 dark:text-gray-400">
+                    Available: <strong className="text-amber-600 dark:text-amber-400">{currentBalance?.toLocaleString()}</strong>
                   </span>
                 </div>
                 <input
@@ -272,10 +272,10 @@ export default function WithdrawalModal({
                   step="500"
                   value={coinAmount}
                   onChange={(e) => setCoinAmount(e.target.value)}
-                  className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-amber-400 font-bold focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-amber-400 font-bold focus:outline-none focus:border-amber-500"
                   required
                 />
-                <div className="flex justify-between items-center mt-1 text-[11px] text-gray-400">
+                <div className="flex justify-between items-center mt-1 text-[11px] text-slate-500 dark:text-gray-400">
                   <span>
                     Min: {minWithdrawalCoins.toLocaleString()} Coins ($
                     {(minWithdrawalCoins / coinsPerUsd).toFixed(2)})
@@ -285,7 +285,7 @@ export default function WithdrawalModal({
               </div>
 
               {/* Live Exchange Rate & Conversion Preview */}
-              <div className="bg-casino-dark/80 rounded-xl p-3 border border-casino-border/60 text-xs flex justify-between items-center">
+              <div className="bg-slate-50 dark:bg-casino-dark/80 rounded-xl p-3 border border-slate-200 dark:border-casino-border/60 text-xs flex justify-between items-center">
                 <div>
                   <span className="text-slate-800 dark:text-gray-300 font-semibold block">
                     Rate: {coinsPerUsd.toLocaleString()} Coins = $1.00 USD
@@ -295,8 +295,8 @@ export default function WithdrawalModal({
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-gray-400 block">You Receive:</span>
-                  <span className="text-base font-extrabold text-emerald-400">${estimatedUsd} USD</span>
+                  <span className="text-xs text-slate-500 dark:text-gray-400 block">You Receive:</span>
+                  <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">${estimatedUsd} USD</span>
                 </div>
               </div>
 

@@ -264,15 +264,15 @@ export default function PaymentMethodPage({
       ) : !savedMethod ? (
         /* One-Time Setup Card when player has 0 saved accounts */
         <div className="bg-casino-card border border-casino-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl">
-          <div className="flex items-center space-x-3 mb-5 pb-3 border-b border-casino-border">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="flex items-center space-x-3 mb-5 pb-3 border-b border-slate-200 dark:border-casino-border">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black text-white">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
                 Set Up Your Bank Account
               </h3>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-500 dark:text-gray-400">
                 Choose your bank below and enter your account details once
               </p>
             </div>
@@ -281,7 +281,7 @@ export default function PaymentMethodPage({
           <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
             {/* Visual Bank Selector Grid with Bank Logos */}
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Select Your Bank:
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -297,7 +297,7 @@ export default function PaymentMethodPage({
                       className={`p-2.5 sm:p-3 rounded-xl border text-left flex items-center space-x-2.5 transition-all ${
                         isSelected
                           ? "bg-amber-500/15 border-amber-500 ring-1 ring-amber-500/40 shadow-md"
-                          : "bg-casino-dark border-casino-border hover:border-gray-600"
+                          : "bg-slate-50 dark:bg-casino-dark border-slate-200 dark:border-casino-border hover:border-gray-400 dark:hover:border-gray-600"
                       }`}
                     >
                       <BankLogo bankName={bName} logoUrl={bLogo} size="md" />
@@ -305,7 +305,7 @@ export default function PaymentMethodPage({
                         <span
                           className={`text-xs font-black block truncate ${
                             isSelected
-                              ? "text-amber-400"
+                              ? "text-amber-600 dark:text-amber-400"
                               : "text-slate-900 dark:text-white"
                           }`}
                         >
@@ -320,7 +320,7 @@ export default function PaymentMethodPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Account Number
                 </label>
                 <input
@@ -328,13 +328,13 @@ export default function PaymentMethodPage({
                   placeholder="e.g. 000 123 456"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 font-mono focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 font-mono focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                   Account Holder Full Name
                 </label>
                 <input
@@ -342,14 +342,14 @@ export default function PaymentMethodPage({
                   placeholder="e.g. SOK CHANTHA"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value.toUpperCase())}
-                  className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 uppercase focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 uppercase focus:outline-none focus:border-amber-500"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                 Account Label / Nickname{" "}
                 <span className="text-gray-500 font-normal">(Optional)</span>
               </label>
@@ -358,7 +358,7 @@ export default function PaymentMethodPage({
                 placeholder="e.g. Personal Account"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-amber-500"
               />
             </div>
 
@@ -385,42 +385,42 @@ export default function PaymentMethodPage({
                     return <BankLogo bankName={savedMethod.bank_name} logoUrl={savedLogo} size="lg" />;
                   })()}
                   <div className="min-w-0">
-                    <h4 className="text-base sm:text-lg font-black text-white truncate">
+                    <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
                       {savedMethod.bank_name}
                     </h4>
                     {savedMethod.label ? (
-                      <span className="text-xs text-amber-400 font-semibold block truncate">
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold block truncate">
                         {savedMethod.label}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 block">
+                      <span className="text-xs text-slate-500 dark:text-gray-400 block">
                         Active Payout Bank Account
                       </span>
                     )}
                   </div>
                 </div>
 
-                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider flex-shrink-0">
+                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-wider flex-shrink-0">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>Linked</span>
                 </span>
               </div>
 
               {/* Account Number & Holder Box */}
-              <div className="bg-casino-dark/90 border border-casino-border/80 rounded-xl p-4 space-y-2.5 mb-5">
+              <div className="bg-slate-50 dark:bg-casino-dark/90 border border-slate-200 dark:border-casino-border/80 rounded-xl p-4 space-y-2.5 mb-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">
+                  <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold">
                     Account Number
                   </span>
-                  <span className="text-base sm:text-lg font-mono font-black text-amber-400 tracking-wider">
+                  <span className="text-base sm:text-lg font-mono font-black text-amber-600 dark:text-amber-400 tracking-wider">
                     {savedMethod.account_number}
                   </span>
                 </div>
-                <div className="flex items-center justify-between border-t border-casino-border/50 pt-2.5">
-                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-casino-border/50 pt-2.5">
+                  <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold">
                     Account Holder
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-white uppercase">
+                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white uppercase">
                     {savedMethod.account_name}
                   </span>
                 </div>
@@ -428,7 +428,7 @@ export default function PaymentMethodPage({
             </div>
 
             {/* Card Actions */}
-            <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-casino-border/60">
+            <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-slate-200 dark:border-casino-border/60">
               <button
                 onClick={() => {
                   if (onOpenSellCoinsModal) {
@@ -445,7 +445,7 @@ export default function PaymentMethodPage({
 
               <button
                 onClick={() => openEditForm(savedMethod)}
-                className="flex items-center space-x-1.5 py-2.5 px-3.5 rounded-xl bg-casino-dark hover:bg-white/10 border border-casino-border text-gray-200 hover:text-white text-xs font-bold transition-colors"
+                className="flex items-center space-x-1.5 py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-casino-dark dark:hover:bg-white/10 border border-slate-200 dark:border-casino-border text-slate-700 hover:text-slate-900 dark:text-gray-200 dark:hover:text-white text-xs font-bold transition-colors"
                 title="Edit Bank Account"
               >
                 <Edit3 className="w-4 h-4" />
@@ -477,7 +477,7 @@ export default function PaymentMethodPage({
             >
               <button
                 onClick={() => setShowFormModal(false)}
-                className="absolute top-3.5 right-3.5 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -489,12 +489,12 @@ export default function PaymentMethodPage({
                   return <BankLogo bankName={bankName} logoUrl={currLogo} size="md" />;
                 })()}
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
                     {editingMethod
                       ? "Edit Bank Account"
                       : "Set Up Bank Account"}
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500 dark:text-gray-400">
                     Update your payout bank account details
                   </p>
                 </div>
@@ -502,7 +502,7 @@ export default function PaymentMethodPage({
 
               <form onSubmit={handleSave} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                     Select Bank
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -518,14 +518,14 @@ export default function PaymentMethodPage({
                           className={`p-2 rounded-xl border text-left flex items-center space-x-2 transition-all ${
                             isSelected
                               ? "bg-amber-500/15 border-amber-500 ring-1 ring-amber-500/40"
-                              : "bg-casino-dark border-casino-border hover:border-gray-600"
+                              : "bg-slate-50 dark:bg-casino-dark border-slate-200 dark:border-casino-border hover:border-gray-400 dark:hover:border-gray-600"
                           }`}
                         >
                           <BankLogo bankName={bName} logoUrl={bLogo} size="sm" />
                           <span
                             className={`text-xs font-bold truncate ${
                               isSelected
-                                ? "text-amber-400"
+                                ? "text-amber-600 dark:text-amber-400"
                                 : "text-slate-900 dark:text-white"
                             }`}
                           >
@@ -538,7 +538,7 @@ export default function PaymentMethodPage({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                     Account Number
                   </label>
                   <input
@@ -546,13 +546,13 @@ export default function PaymentMethodPage({
                     placeholder="e.g. 000 123 456"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 font-mono focus:outline-none focus:border-amber-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                     Account Holder Full Name
                   </label>
                   <input
@@ -562,13 +562,13 @@ export default function PaymentMethodPage({
                     onChange={(e) =>
                       setAccountName(e.target.value.toUpperCase())
                     }
-                    className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 uppercase focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 uppercase focus:outline-none focus:border-amber-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
                     Account Label / Nickname{" "}
                     <span className="text-gray-500 font-normal">
                       (Optional)
@@ -579,7 +579,7 @@ export default function PaymentMethodPage({
                     placeholder="e.g. Main Account"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
-                    className="w-full bg-casino-dark border border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 dark:bg-casino-dark border border-slate-200 dark:border-casino-border rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-gray-200 focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
@@ -587,7 +587,7 @@ export default function PaymentMethodPage({
                   <button
                     type="button"
                     onClick={() => setShowFormModal(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-casino-dark hover:bg-white/5 border border-casino-border text-gray-300 text-xs font-bold transition-colors"
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-casino-dark dark:hover:bg-white/5 border border-slate-200 dark:border-casino-border text-slate-700 dark:text-gray-300 text-xs font-bold transition-colors"
                   >
                     Cancel
                   </button>

@@ -184,6 +184,7 @@ export const adminAPI = {
   getTopups: (params) => api.get("/admin/topups", { params }),
   approveTopup: (id) => api.post(`/admin/topups/${id}/approve`),
   renewBakongToken: (email) => api.post("/admin/bakong/renew-token", { email }),
+  verifyTelegramBot: (token) => api.post("/admin/telegram/verify-bot", { token }),
   getWalletTransactions: (params) =>
     api.get("/admin/wallet-transactions", { params }),
   getAuditLogs: (params) => api.get("/admin/audit-logs", { params }),

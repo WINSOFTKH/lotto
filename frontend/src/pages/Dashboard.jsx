@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { tableAPI } from "../services/api";
 import { formatCoins } from "../utils/formatters";
+import CoinIcon from "../components/CoinIcon";
 
 export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
   const [tables, setTables] = useState([]);
@@ -183,7 +184,9 @@ export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
               className="py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:from-amber-400 hover:to-yellow-200 text-black shadow-lg shadow-amber-500/20 flex items-center space-x-2 hover:scale-[1.02] active:scale-95 transition-all"
             >
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-black" />
-              <span> Quick Play ({quickPlayCoins} Coins)</span>
+              <span className="inline-flex items-center gap-1.5">
+                Quick Play
+              </span>
             </button>
 
             {/* Create Custom Table Button */}
@@ -403,24 +406,20 @@ export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
                       <span className="text-slate-500 dark:text-gray-400 block text-[8px] sm:text-[10px] truncate">
                         Entry Fee:
                       </span>
-                      <span className="font-bold text-amber-600 dark:text-amber-400 text-[11px] sm:text-xs truncate block">
-                        {formatCoins(table.entry_fee)}{" "}
-                        <span className="text-[8px] sm:text-[10px] text-slate-400 dark:text-gray-400 font-normal">
-                          Coins
-                        </span>
+                      <span className="font-bold text-amber-600 dark:text-amber-400 text-[11px] sm:text-xs truncate flex items-center gap-1">
+                        <CoinIcon className="w-3.5 h-3.5" />
+                        {formatCoins(table.entry_fee)}
                       </span>
                     </div>
                     <div className="min-w-0">
                       <span className="text-slate-500 dark:text-gray-400 block text-[8px] sm:text-[10px] truncate">
                         Winner Prize:
                       </span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[11px] sm:text-xs truncate block">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[11px] sm:text-xs truncate flex items-center gap-1">
+                        <CoinIcon className="w-3.5 h-3.5" />
                         {formatCoins(
                           Math.floor(table.entry_fee * maxSeats * 0.9),
-                        )}{" "}
-                        <span className="text-[8px] sm:text-[10px] text-slate-400 dark:text-gray-400 font-normal">
-                          Coins
-                        </span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -449,12 +448,14 @@ export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
                         <span className="truncate">Watch Live</span>
                       </>
                     ) : (
-                      <span className="truncate">
-                        <span className="sm:hidden">
-                          Join ({formatCoins(table.entry_fee)})
+                      <span className="truncate inline-flex items-center gap-1">
+                        <span className="sm:hidden inline-flex items-center gap-1">
+                          Join (
+                          <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                          {formatCoins(table.entry_fee)})
                         </span>
-                        <span className="hidden sm:inline">
-                          Join Table ({formatCoins(table.entry_fee)} Coins)
+                        <span className="hidden sm:inline-flex items-center gap-1">
+                          Join Table
                         </span>
                       </span>
                     )}
@@ -526,8 +527,10 @@ export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  Entry Fee (Coins):
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <span>Entry Fee</span>
+                  <CoinIcon className="w-3.5 h-3.5 inline -mt-0.5" />
+                  <span>:</span>
                 </label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {allowedEntryFees.map((fee) => (
@@ -535,13 +538,13 @@ export default function Dashboard({ user, onJoinTable, onQuickPlay }) {
                       key={fee}
                       type="button"
                       onClick={() => setEntryFee(String(fee))}
-                      className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                      className={`py-2 rounded-xl text-xs font-black border transition-all ${
                         entryFee === String(fee)
-                          ? "bg-amber-500 text-black border-amber-400"
+                          ? "bg-amber-500 text-black border-amber-400 shadow-sm"
                           : "bg-casino-dark text-slate-700 dark:text-gray-400 border-casino-border hover:border-gray-400 dark:hover:border-gray-700"
                       }`}
                     >
-                      {fee}
+                      {formatCoins(fee)}
                     </button>
                   ))}
                 </div>

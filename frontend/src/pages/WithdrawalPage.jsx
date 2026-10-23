@@ -8,6 +8,7 @@ import {
 import { withdrawalAPI } from '../services/api';
 import WithdrawalModal from '../components/WithdrawalModal';
 import BankLogo from '../components/BankLogo';
+import CoinIcon from '../components/CoinIcon';
 import { formatCoins } from '../utils/formatters';
 
 export default function WithdrawalPage({
@@ -195,7 +196,7 @@ export default function WithdrawalPage({
         <div className="bg-casino-card border border-casino-border rounded-xl sm:rounded-2xl p-2.5 sm:p-5 relative overflow-hidden">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1">
             <span className="text-[10px] sm:text-xs text-gray-400 font-semibold truncate">Available Balance</span>
-            <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0" />
+            <CoinIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
           </div>
           <div className="text-sm sm:text-2xl font-black text-amber-400 font-mono tracking-tight truncate">
             {formatCoins(currentBalance)} <span className="text-[9px] sm:text-xs text-gray-400 font-normal">Coins</span>
@@ -359,9 +360,9 @@ export default function WithdrawalPage({
                               return <BankLogo bankName={w.bank_name} logoUrl={bLogo} size="sm" />;
                             })()}
                             <div className="min-w-0">
-                              <span className="font-bold text-white block truncate">{w.bank_name}</span>
-                              <span className="text-[11px] text-gray-400 font-mono block truncate">
-                                {w.account_number} • <strong className="text-gray-300 font-sans">{w.account_name}</strong>
+                              <span className="font-bold text-slate-900 dark:text-white block truncate">{w.bank_name}</span>
+                              <span className="text-[11px] text-slate-500 dark:text-gray-400 font-mono block truncate">
+                                {w.account_number} • <strong className="text-slate-700 dark:text-gray-300 font-sans">{w.account_name}</strong>
                               </span>
                             </div>
                           </div>
@@ -467,8 +468,8 @@ export default function WithdrawalPage({
                           return <BankLogo bankName={w.bank_name} logoUrl={bLogo} size="sm" />;
                         })()}
                         <div className="min-w-0">
-                          <span className="text-xs font-bold text-white block truncate">{w.bank_name}</span>
-                          <span className="text-[10px] text-gray-400 font-mono block truncate">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">{w.bank_name}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono block truncate">
                             {w.account_number} • {w.account_name}
                           </span>
                         </div>
@@ -550,14 +551,14 @@ export default function WithdrawalPage({
               <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto mb-3 sm:mb-4">
                 <Ban className="w-5 h-5 sm:w-7 sm:h-7" />
               </div>
-              <h3 className="text-lg font-black text-white mb-1">Cancel Sell Coins Request?</h3>
-              <p className="text-xs text-gray-400 mb-4">
-                Are you sure you want to cancel your sell coins request to <strong className="text-gray-200">{cancellingItem.bank_name}</strong>?
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">Cancel Sell Coins Request?</h3>
+              <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
+                Are you sure you want to cancel your sell coins request to <strong className="text-slate-800 dark:text-gray-200">{cancellingItem.bank_name}</strong>?
               </p>
 
               <div className="bg-casino-dark/90 border border-amber-500/30 rounded-2xl p-3.5 mb-5 flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-left">
-                  <Coins className="w-5 h-5 text-amber-400 animate-pulse" />
+                  <CoinIcon className="w-6 h-6" />
                   <div>
                     <span className="text-[10px] text-gray-400 block font-semibold uppercase">Instant Refund</span>
                     <span className="text-base font-black text-amber-400 font-mono">

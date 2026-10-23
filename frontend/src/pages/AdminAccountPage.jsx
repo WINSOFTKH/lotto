@@ -24,6 +24,7 @@ import {
 import PlayerAvatar, { getRandomAvatarUrl } from '../components/PlayerAvatar';
 import { adminAPI } from '../services/api';
 import { formatCoins } from '../utils/formatters';
+import CoinIcon from '../components/CoinIcon';
 import { triggerHaptic } from '../services/telegram';
 
 // Curated selection of VIP / Casino Admin Preset Avatars
@@ -342,7 +343,7 @@ export default function AdminAccountPage({
                 </div>
 
                 <div className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-white/70 dark:bg-black/40 border border-slate-300 dark:border-white/10 text-amber-800 dark:text-amber-400 font-bold">
-                  <Coins className="w-3.5 h-3.5 text-amber-500" />
+                  <CoinIcon className="w-4 h-4" />
                   <span>{formatCoins(accountDetails?.coinBalance ?? user.coinBalance)} Coins</span>
                 </div>
 

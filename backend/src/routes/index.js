@@ -25,7 +25,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'online',
     timestamp: new Date().toISOString(),
-    service: 'KH-Lotto Real-Time Engine',
+    service: 'LOTTO 4U Real-Time Engine',
   });
 });
 

@@ -275,7 +275,8 @@ VALUES
     ('referral_program_enabled', 'true', 'Enable or disable the referral commission program'),
     ('referral_bonus_level1_percent', '5', 'Commission % awarded to direct inviter (Level A from Level B deposit)'),
     ('referral_bonus_level2_percent', '1', 'Commission % awarded to secondary inviter (Level A from Level C deposit)'),
-    ('referral_bind_bonus_coins', '50', 'Bonus coins awarded immediately to a player upon entering and binding an inviter referral code')
+    ('referral_bind_bonus_coins', '50', 'Bonus coins awarded immediately to a player upon entering and binding an inviter referral code'),
+    ('telegram_bot_token', '', 'Bot token from @BotFather on Telegram used to validate Mini App authentication and bot services')
 ON CONFLICT (key) DO NOTHING;
 
 -- Default password is Admin@123456 (bcrypt hash: $2a$10$XyfZIChVcy1WVsLG6JLrPOfoj0wm6ClEo6D8pJZlzEXCIi9w8JPV6)

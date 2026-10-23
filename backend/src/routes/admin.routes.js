@@ -39,6 +39,7 @@ router.post('/tables/recover-crashed', requireRoles('admin'), AdminController.re
 router.get('/topups', requireRoles('admin', 'finance'), AdminController.getTopups);
 router.post('/topups/:id/approve', requireRoles('admin', 'finance'), AdminController.approveTopup);
 router.post('/bakong/renew-token', requireRoles('admin'), AdminController.renewBakongToken);
+router.post('/telegram/verify-bot', requireRoles('admin'), AdminController.verifyTelegramBot);
 
 // Coin Ledger: Player Earnings and Reductions (Admin & Finance)
 router.get('/wallet-transactions', requireRoles('admin', 'finance'), AdminController.getWalletTransactions);

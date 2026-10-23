@@ -7,6 +7,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        xs: '400px',
+      },
       colors: {
         casino: {
           dark: 'rgb(var(--color-casino-dark) / <alpha-value>)',

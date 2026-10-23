@@ -21,7 +21,7 @@ io.on("connection", (socket) => {
 server.listen(config.PORT, "0.0.0.0", () => {
   console.log(`
 =====================================================
-🎰  KH-LOTTO REAL-TIME LOTTERY SERVER ONLINE  🎰
+🎰  LOTTO 4U REAL-TIME LOTTERY SERVER ONLINE  🎰
 =====================================================
 📡  Port:          ${config.PORT}
 🌍  Environment:   ${config.NODE_ENV}
@@ -34,8 +34,8 @@ server.listen(config.PORT, "0.0.0.0", () => {
   // Start background scheduler to check & recover crashed tables (started >= 1h ago)
   TableRecoveryService.startScheduler(5);
 
-  // Start background KHQR payment auto-checker worker (emulates automated webhooks)
-  KhqrService.startPollingWorker(5);
+  // Start background KHQR payment auto-checker worker (throttled to 60s to protect Bakong daily limit of 100)
+  KhqrService.startPollingWorker(60);
 });
 
 // Graceful shutdown handling
