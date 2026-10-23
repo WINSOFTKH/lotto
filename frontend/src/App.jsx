@@ -19,7 +19,7 @@ import { useSocket } from './hooks/useSocket';
 import { useSoundEffects } from './hooks/useSoundEffects';
 import { authAPI, tableAPI, supportAPI, referralAPI } from './services/api';
 import { initTelegramApp, getTelegramWebApp, triggerHaptic, isTelegramWebApp } from './services/telegram';
-import { Headphones, Send, X } from 'lucide-react';
+import { Headphones, Send, X, ShieldAlert, RefreshCw, Lock } from 'lucide-react';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('kh_token') || '');
@@ -49,6 +49,8 @@ export default function App() {
   const [referralBindBonus, setReferralBindBonus] = useState(50);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [telegramBlocked, setTelegramBlocked] = useState(false);
+  const [telegramBlockedError, setTelegramBlockedError] = useState('');
 
   // Socket & Sounds
   const { socket, isConnected } = useSocket(token);
@@ -82,8 +84,16 @@ export default function App() {
   // Initialize Telegram Mini App SDK and Auto-Authenticate
   useEffect(() => {
     const tg = initTelegramApp();
-    if (tg && tg.initData) {
-      handleTelegramLogin(tg.initData, tg.initDataUnsafe?.user);
+    if (isTelegramWebApp()) {
+      // In Telegram Mini App environment, MUST strictly verify with telegram bot token
+      if (tg && tg.initData) {
+        handleTelegramLogin(tg.initData, tg.initDataUnsafe?.user);
+      } else {
+        // Missing initData in Telegram environment
+        setTelegramBlocked(true);
+        setTelegramBlockedError('Telegram authentication signature (initData) is missing. Cannot verify bot authorization.');
+        setAuthResolved(true);
+      }
     } else if (token) {
       loadUserProfile();
     } else {
@@ -191,6 +201,16 @@ export default function App() {
     try {
       setAuthLoading(true);
       setAuthError('');
+      setTelegramBlocked(false);
+      setTelegramBlockedError('');
+
+      if (!initData) {
+        setTelegramBlocked(true);
+        setTelegramBlockedError('Telegram signature (initData) is missing. Cannot open app.');
+        setAuthResolved(true);
+        return;
+      }
+
       const res = await authAPI.telegramLogin({ initData, user: tgUser });
       const { token: receivedToken, user: userData } = res.data.data;
       localStorage.setItem('kh_token', receivedToken);
@@ -199,11 +219,13 @@ export default function App() {
       soundEffects.playCoinClink();
       triggerHaptic('success');
     } catch (err) {
-      console.warn('[TelegramAuth] Auto-login error:', err);
-      setAuthError(err.response?.data?.error || 'Telegram authentication failed.');
-      if (token) {
-        loadUserProfile();
-      }
+      console.warn('[TelegramAuth] Telegram authentication failed:', err);
+      const errMsg = err.response?.data?.error || 'Telegram Bot Token does not match. You cannot open this app from an unauthorized bot.';
+      localStorage.removeItem('kh_token');
+      setToken('');
+      setUser(null);
+      setTelegramBlocked(true);
+      setTelegramBlockedError(errMsg);
     } finally {
       setAuthLoading(false);
       setAuthResolved(true);
@@ -319,6 +341,64 @@ export default function App() {
         <div className="text-center space-y-1">
           <h3 className="text-white font-bold text-base">Entering LOTTO 4U Arena...</h3>
           <p className="text-xs text-amber-400 font-mono">Synchronizing Telegram Session</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If in Telegram Mini App mode and Bot Token verification failed / blocked
+  if (isTelegramWebApp() && telegramBlocked) {
+    const tg = getTelegramWebApp();
+    return (
+      <div className="min-h-screen bg-casino-dark flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-casino-card border border-red-500/40 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-36 h-36 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+            <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />
+          </div>
+
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold font-mono mb-3">
+            <Lock className="w-3.5 h-3.5" />
+            <span>UNAUTHORIZED TELEGRAM BOT</span>
+          </div>
+
+          <h2 className="text-xl font-black text-white mb-2">Access Denied</h2>
+          <p className="text-xs text-gray-400 leading-relaxed mb-6">
+            {telegramBlockedError || 'The Telegram Bot Token does not match our verified system. You are prohibited from opening or accessing this application from an unauthorized bot.'}
+          </p>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                const tgApp = getTelegramWebApp();
+                if (tgApp && tgApp.initData) {
+                  handleTelegramLogin(tgApp.initData, tgApp.initDataUnsafe?.user);
+                } else {
+                  window.location.reload();
+                }
+              }}
+              className="w-full py-3.5 rounded-xl font-bold text-xs bg-casino-gold hover:bg-yellow-400 text-black flex items-center justify-center space-x-2 transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Retry Verification</span>
+            </button>
+
+            {tg?.close && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  tg.close();
+                }}
+                className="w-full py-3 rounded-xl font-bold text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center space-x-2 transition-all active:scale-95"
+              >
+                <X className="w-4 h-4" />
+                <span>Close Telegram App</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

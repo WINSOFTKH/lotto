@@ -294,65 +294,101 @@ class AuthController {
 
   /**
    * Telegram Mini App Seamless Login & Registration
-   * Validates initData from Telegram WebApp and logs in or creates player
+   * Strictly validates initData against the server's configured telegram_bot_token.
+   * If the bot token does not match or is missing, access is denied and the app cannot open.
    */
   static async telegramLogin(req, res, next) {
     try {
-      const { initData, user: rawUser } = req.body;
+      const { initData } = req.body;
 
-      if (!initData && !rawUser) {
-        return res.status(400).json({ success: false, error: 'Telegram initData or user payload is required' });
+      // 1. Strict validation: initData is required
+      if (!initData || typeof initData !== 'string') {
+        return res.status(401).json({
+          success: false,
+          code: 'TG_MISSING_INIT_DATA',
+          error: 'Telegram WebApp initData is required. Access denied.',
+        });
       }
 
+      // 2. Fetch server's configured bot token
+      const activeBotToken = await AuthController.getTelegramBotToken();
+      if (!activeBotToken || !activeBotToken.trim()) {
+        console.warn('[TelegramAuth] Server has no telegram_bot_token configured in system_settings.');
+        return res.status(403).json({
+          success: false,
+          code: 'TG_BOT_TOKEN_NOT_CONFIGURED',
+          error: 'Server Telegram Bot Token is not configured. Access denied.',
+        });
+      }
+
+      // 3. Parse parameters and extract hash
+      const params = new URLSearchParams(initData);
+      const hash = params.get('hash');
+      params.delete('hash');
+
+      if (!hash) {
+        return res.status(401).json({
+          success: false,
+          code: 'TG_INVALID_HASH',
+          error: 'Missing Telegram authentication hash. Access denied.',
+        });
+      }
+
+      // 4. Validate auth_date (prevent replay attacks older than 24 hours)
+      const authDate = parseInt(params.get('auth_date'), 10);
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      if (isNaN(authDate) || (nowSeconds - authDate) > 86400) {
+        return res.status(401).json({
+          success: false,
+          code: 'TG_AUTH_DATE_EXPIRED',
+          error: 'Telegram authentication session expired. Please reopen the Mini App from Telegram.',
+        });
+      }
+
+      // 5. Compute HMAC-SHA256 signature using activeBotToken
+      const dataCheckArr = [];
+      Array.from(params.keys()).sort().forEach((key) => {
+        dataCheckArr.push(`${key}=${params.get(key)}`);
+      });
+      const dataCheckString = dataCheckArr.join('\n');
+
+      const secretKey = crypto
+        .createHmac('sha256', 'WebAppData')
+        .update(activeBotToken.trim())
+        .digest();
+
+      const calculatedHash = crypto
+        .createHmac('sha256', secretKey)
+        .update(dataCheckString)
+        .digest('hex');
+
+      // 6. Cryptographic Token Match Check: If hash doesn't match, block access
+      if (calculatedHash !== hash) {
+        console.warn('[TelegramAuth] ⚠️ Telegram Bot Token mismatch! Calculated hash does not match initData hash.');
+        return res.status(403).json({
+          success: false,
+          code: 'TG_TOKEN_MISMATCH',
+          error: 'Telegram Bot Token does not match. You cannot open this app from an unauthorized bot.',
+        });
+      }
+
+      // 7. Parse user payload from verified initData
       let tgUser = null;
-
-      // 1. Validate initData if provided and TELEGRAM_BOT_TOKEN is set
-      if (initData) {
-        const params = new URLSearchParams(initData);
-        const hash = params.get('hash');
-        params.delete('hash');
-
-        const activeBotToken = await AuthController.getTelegramBotToken();
-
-        // Check hash if bot token configured
-        if (activeBotToken && hash) {
-          const dataCheckArr = [];
-          Array.from(params.keys()).sort().forEach(key => {
-            dataCheckArr.push(`${key}=${params.get(key)}`);
-          });
-          const dataCheckString = dataCheckArr.join('\n');
-
-          const secretKey = crypto.createHmac('sha256', 'WebAppData')
-            .update(activeBotToken)
-            .digest();
-
-          const calculatedHash = crypto.createHmac('sha256', secretKey)
-            .update(dataCheckString)
-            .digest('hex');
-
-          if (calculatedHash !== hash) {
-            console.warn('[TelegramAuth] Hash verification mismatch. Rejecting untrusted initData.');
-            return res.status(401).json({ success: false, error: 'Invalid Telegram WebApp authentication hash' });
-          }
+      const userParam = params.get('user');
+      if (userParam) {
+        try {
+          tgUser = JSON.parse(userParam);
+        } catch (e) {
+          console.warn('[TelegramAuth] Failed to parse user from initData:', e.message);
         }
-
-        const userParam = params.get('user');
-        if (userParam) {
-          try {
-            tgUser = JSON.parse(userParam);
-          } catch (e) {
-            console.warn('[TelegramAuth] Failed to parse user from initData:', e.message);
-          }
-        }
-      }
-
-      // Fallback to rawUser if userParam wasn't parsed (e.g. dev/test mode)
-      if (!tgUser && rawUser) {
-        tgUser = typeof rawUser === 'string' ? JSON.parse(rawUser) : rawUser;
       }
 
       if (!tgUser || !tgUser.id) {
-        return res.status(400).json({ success: false, error: 'Invalid Telegram user data' });
+        return res.status(400).json({
+          success: false,
+          code: 'TG_INVALID_USER',
+          error: 'Invalid Telegram user payload in verified initData.',
+        });
       }
 
       const telegramId = String(tgUser.id);
