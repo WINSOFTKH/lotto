@@ -10,9 +10,42 @@ export const getTelegramWebApp = () => {
   return null;
 };
 
+/**
+ * Safely extracts Telegram initData from SDK or directly from location.hash / query
+ * to prevent race conditions on initial WebView load.
+ */
+export const getTelegramInitData = () => {
+  const tg = getTelegramWebApp();
+  if (tg?.initData) return tg.initData;
+
+  // Fallback 1: check window.location.hash (#tgWebAppData=...)
+  if (typeof window !== 'undefined' && window.location.hash) {
+    try {
+      const hash = window.location.hash.startsWith('#')
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hash);
+      const hashData = hashParams.get('tgWebAppData');
+      if (hashData) return hashData;
+    } catch {}
+  }
+
+  // Fallback 2: check window.location.search (?tgWebAppData=...)
+  if (typeof window !== 'undefined' && window.location.search) {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const searchData = searchParams.get('tgWebAppData');
+      if (searchData) return searchData;
+    } catch {}
+  }
+
+  return '';
+};
+
 export const isTelegramWebApp = () => {
   const tg = getTelegramWebApp();
-  return Boolean(tg && (tg.initData || tg.platform !== 'unknown'));
+  if (!tg) return false;
+  return Boolean(getTelegramInitData() || (tg.platform && tg.platform !== 'unknown'));
 };
 
 export const initTelegramApp = () => {

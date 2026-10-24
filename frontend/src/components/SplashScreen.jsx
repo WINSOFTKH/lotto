@@ -10,20 +10,51 @@ const LOADING_STEPS = [
   { progress: 100, text: 'Ready! Entering Arena...' },
 ];
 
-export default function SplashScreen({ onFinish, isReady = true, minDuration = 1800 }) {
+export default function SplashScreen({ onFinish, isReady = true, minDuration = 1800, maxDuration = 3800 }) {
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('Initializing LOTTO 4U Arena...');
   const [isDone, setIsDone] = useState(false);
+  const [showSkip, setShowSkip] = useState(false);
 
   useEffect(() => {
+    let timer = null;
+    let completed = false;
     const startTime = Date.now();
-    const interval = setInterval(() => {
+
+    const triggerFinish = () => {
+      if (completed) return;
+      completed = true;
+      if (timer) clearInterval(timer);
+      setProgress(100);
+      setStatusText('Ready! Entering Arena...');
+      setTimeout(() => {
+        setIsDone(true);
+        setTimeout(() => {
+          if (onFinish) onFinish();
+        }, 350);
+      }, 150);
+    };
+
+    timer = setInterval(() => {
       const elapsed = Date.now() - startTime;
       let rawPct = Math.min(100, Math.floor((elapsed / minDuration) * 100));
 
-      // If auth or profile check is still pending, hold progress at 92% until isReady
-      if (!isReady && rawPct > 92) {
+      // After 3 seconds, show a subtle skip option so user is never locked
+      if (elapsed > 3000) {
+        setShowSkip(true);
+      }
+
+      // Hard safety timeout: if auth takes longer than maxDuration (3.8s),
+      // DO NOT freeze at 92%! Smoothly proceed to 100% and release splash screen.
+      const isForced = elapsed >= maxDuration;
+      const effectiveReady = isReady || isForced;
+
+      if (!effectiveReady && rawPct > 92) {
         rawPct = 92;
+      } else if (isForced && rawPct < 100) {
+        // Accelerate completion smoothly over ~300ms
+        const overTime = elapsed - maxDuration;
+        rawPct = Math.min(100, 92 + Math.floor((overTime / 300) * 8));
       }
 
       // Find appropriate status step
@@ -35,19 +66,15 @@ export default function SplashScreen({ onFinish, isReady = true, minDuration = 1
 
       setProgress(rawPct);
 
-      if (rawPct >= 100 && isReady) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsDone(true);
-          setTimeout(() => {
-            if (onFinish) onFinish();
-          }, 450); // allow exit animation to complete
-        }, 200);
+      if (rawPct >= 100 && (isReady || isForced)) {
+        triggerFinish();
       }
-    }, 35);
+    }, 30);
 
-    return () => clearInterval(interval);
-  }, [minDuration, onFinish, isReady]);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [minDuration, maxDuration, onFinish, isReady]);
 
   return (
     <AnimatePresence>
@@ -165,6 +192,26 @@ export default function SplashScreen({ onFinish, isReady = true, minDuration = 1
                   transition={{ ease: 'easeOut', duration: 0.1 }}
                 />
               </div>
+
+              {/* Graceful skip option if connection is slow */}
+              {showSkip && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center pt-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDone(true);
+                      if (onFinish) onFinish();
+                    }}
+                    className="text-[11px] font-mono text-amber-400/80 hover:text-amber-300 underline underline-offset-4 transition-colors cursor-pointer"
+                  >
+                    Tap here to continue →
+                  </button>
+                </motion.div>
+              )}
             </div>
           </div>
 

@@ -18,7 +18,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { useSocket } from './hooks/useSocket';
 import { useSoundEffects } from './hooks/useSoundEffects';
 import { authAPI, tableAPI, supportAPI, referralAPI } from './services/api';
-import { initTelegramApp, getTelegramWebApp, triggerHaptic, isTelegramWebApp } from './services/telegram';
+import { initTelegramApp, getTelegramWebApp, getTelegramInitData, triggerHaptic, isTelegramWebApp } from './services/telegram';
 import { Headphones, Send, X, ShieldAlert, RefreshCw, Lock } from 'lucide-react';
 
 export default function App() {
@@ -83,22 +83,57 @@ export default function App() {
 
   // Initialize Telegram Mini App SDK and Auto-Authenticate
   useEffect(() => {
-    const tg = initTelegramApp();
-    if (isTelegramWebApp()) {
-      // In Telegram Mini App environment, MUST strictly verify with telegram bot token
-      if (tg && tg.initData) {
-        handleTelegramLogin(tg.initData, tg.initDataUnsafe?.user);
-      } else {
-        // Missing initData in Telegram environment
-        setTelegramBlocked(true);
-        setTelegramBlockedError('Telegram authentication signature (initData) is missing. Cannot verify bot authorization.');
+    let isCancelled = false;
+
+    // Safety watchdog: ensure authResolved is ALWAYS flagged true within 3.5s
+    // so the splash screen or initial load never hangs indefinitely
+    const watchdogTimer = setTimeout(() => {
+      if (!isCancelled) {
         setAuthResolved(true);
       }
-    } else if (token) {
-      loadUserProfile();
-    } else {
-      setAuthResolved(true);
-    }
+    }, 3500);
+
+    const initAuth = async () => {
+      const tg = initTelegramApp();
+      const isTg = isTelegramWebApp();
+
+      if (isTg) {
+        let initData = getTelegramInitData();
+        let tgUser = tg?.initDataUnsafe?.user;
+
+        // If tg is detected but initData takes a few milliseconds to parse from WebView hash,
+        // retry up to 3 times (150ms apart) before concluding it's missing
+        if (!initData) {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            await new Promise((r) => setTimeout(r, 150));
+            if (isCancelled) return;
+            initData = getTelegramInitData();
+            tgUser = tgUser || getTelegramWebApp()?.initDataUnsafe?.user;
+            if (initData) break;
+          }
+        }
+
+        if (initData) {
+          await handleTelegramLogin(initData, tgUser);
+        } else {
+          // Missing initData in Telegram environment
+          setTelegramBlocked(true);
+          setTelegramBlockedError('Telegram authentication signature (initData) is missing. Cannot verify bot authorization.');
+          setAuthResolved(true);
+        }
+      } else if (token) {
+        await loadUserProfile();
+      } else {
+        setAuthResolved(true);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(watchdogTimer);
+    };
   }, []);
 
   // Telegram Native BackButton Handler
@@ -232,7 +267,6 @@ export default function App() {
       if (!initData) {
         setTelegramBlocked(true);
         setTelegramBlockedError('Telegram signature (initData) is missing. Cannot open app.');
-        setAuthResolved(true);
         return;
       }
 
@@ -245,10 +279,17 @@ export default function App() {
       triggerHaptic('success');
     } catch (err) {
       console.warn('[TelegramAuth] Telegram authentication failed:', err);
-      const errMsg = err.response?.data?.error || 'Telegram Bot Token does not match. You cannot open this app from an unauthorized bot.';
-      localStorage.removeItem('kh_token');
-      setToken('');
-      setUser(null);
+      const isNetwork = !err.response || err.code === 'ECONNABORTED' || err.message?.includes('Network Error') || err.message?.includes('timeout');
+
+      const errMsg = isNetwork
+        ? 'Connection to the lottery server timed out. Please check your internet connection and tap Retry.'
+        : (err.response?.data?.error || 'Telegram Bot Token does not match. You cannot open this app from an unauthorized bot.');
+
+      if (!isNetwork) {
+        localStorage.removeItem('kh_token');
+        setToken('');
+        setUser(null);
+      }
       setTelegramBlocked(true);
       setTelegramBlockedError(errMsg);
     } finally {
@@ -352,6 +393,7 @@ export default function App() {
         isReady={authResolved}
         onFinish={() => setShowSplash(false)}
         minDuration={1800}
+        maxDuration={3800}
       />
     );
   }
@@ -374,21 +416,27 @@ export default function App() {
   // If in Telegram Mini App mode and Bot Token verification failed / blocked
   if (isTelegramWebApp() && telegramBlocked) {
     const tg = getTelegramWebApp();
+    const isNetwork = telegramBlockedError.toLowerCase().includes('timed out') || telegramBlockedError.toLowerCase().includes('connection');
+
     return (
       <div className="min-h-screen bg-casino-dark flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-casino-card border border-red-500/40 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
-          <div className="absolute -top-16 -right-16 w-36 h-36 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className={`w-full max-w-md bg-casino-card border ${isNetwork ? 'border-amber-500/40' : 'border-red-500/40'} rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden`}>
+          <div className={`absolute -top-16 -right-16 w-36 h-36 ${isNetwork ? 'bg-amber-500/10' : 'bg-red-500/10'} rounded-full blur-2xl pointer-events-none`} />
 
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-            <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />
+          <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl ${isNetwork ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-red-500/10 border-red-500/30 text-red-400'} border flex items-center justify-center`}>
+            {isNetwork ? (
+              <RefreshCw className="w-8 h-8 text-amber-400 animate-spin-slow" />
+            ) : (
+              <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />
+            )}
           </div>
 
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold font-mono mb-3">
-            <Lock className="w-3.5 h-3.5" />
-            <span>UNAUTHORIZED TELEGRAM BOT</span>
+          <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full ${isNetwork ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-red-500/10 border-red-500/30 text-red-400'} border text-xs font-bold font-mono mb-3`}>
+            {isNetwork ? <RefreshCw className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+            <span>{isNetwork ? 'CONNECTION TIMEOUT' : 'UNAUTHORIZED TELEGRAM BOT'}</span>
           </div>
 
-          <h2 className="text-xl font-black text-white mb-2">Access Denied</h2>
+          <h2 className="text-xl font-black text-white mb-2">{isNetwork ? 'Network Interrupted' : 'Access Denied'}</h2>
           <p className="text-xs text-gray-400 leading-relaxed mb-6">
             {telegramBlockedError || 'The Telegram Bot Token does not match our verified system. You are prohibited from opening or accessing this application from an unauthorized bot.'}
           </p>
@@ -398,13 +446,14 @@ export default function App() {
               type="button"
               onClick={() => {
                 const tgApp = getTelegramWebApp();
-                if (tgApp && tgApp.initData) {
-                  handleTelegramLogin(tgApp.initData, tgApp.initDataUnsafe?.user);
+                const initData = getTelegramInitData();
+                if (initData) {
+                  handleTelegramLogin(initData, tgApp?.initDataUnsafe?.user);
                 } else {
                   window.location.reload();
                 }
               }}
-              className="w-full py-3.5 rounded-xl font-bold text-xs bg-casino-gold hover:bg-yellow-400 text-black flex items-center justify-center space-x-2 transition-all shadow-lg shadow-amber-500/20 active:scale-95"
+              className="w-full py-3.5 rounded-xl font-bold text-xs bg-casino-gold hover:bg-yellow-400 text-black flex items-center justify-center space-x-2 transition-all shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Retry Verification</span>
