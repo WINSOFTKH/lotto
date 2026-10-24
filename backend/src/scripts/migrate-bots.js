@@ -23,14 +23,28 @@ const KHMER_GIVEN_NAMES = [
   'Sovan', 'Sambath', 'Serey', 'Raksmey', 'Kolab', 'Sitha', 'Pharith', 'Sophat', 'Dararith', 'Botum'
 ];
 
+// Female Cambodian Given Names set for gender-matching real human portraits
+const FEMALE_GIVEN_NAMES = new Set([
+  'Pisey', 'Rothana', 'Nary', 'Pich', 'Socheata', 'Kalyan', 'Thida', 'Chantha', 
+  'Sreypov', 'Chenda', 'Malis', 'Bopha', 'Vicheka', 'Leakhena', 'Sreyneang', 
+  'Kunthea', 'Sreymom', 'Romdoul', 'Daneth', 'Reasmey', 'Sreynich', 'Chanthou', 
+  'Phalla', 'Channa', 'Ravy', 'Vanny', 'Sokunthea', 'Dalis', 'Sinat', 'Sreyleak', 
+  'Kanha', 'Chanthea', 'Somaly', 'Monineath', 'Dalin', 'Sreylin', 'Voleak', 
+  'Kolab', 'Sitha', 'Botum', 'Sopheap', 'Sokun', 'Vanna', 'Raksmey',
+  'Vathana', 'Theara', 'Ratana', 'Serey', 'Rathana', 'Ratanaka'
+]);
+
 /**
  * Generates 200 distinct authentic Cambodian names with a space between first and last name
+ * and real human face portrait photos
  * Example: "Sok San", "Chan Dara", "Chea Visal", "Heng Pisey", ...
  */
 function generate200KhmerBots() {
   const bots = [];
   const nameSet = new Set();
   let round = 0;
+  let maleIdx = 0;
+  let femaleIdx = 0;
 
   while (bots.length < 200) {
     for (let i = 0; i < KHMER_SURNAMES.length; i++) {
@@ -41,9 +55,15 @@ function generate200KhmerBots() {
       if (!nameSet.has(fullName)) {
         nameSet.add(fullName);
         const emailSlug = `${surname.toLowerCase()}.${givenName.toLowerCase()}`;
+        const isFemale = FEMALE_GIVEN_NAMES.has(givenName);
+        const photoUrl = isFemale 
+          ? `/avatars/bots/cambodian_w_${(femaleIdx++ % 48) + 1}.jpg`
+          : `/avatars/bots/cambodian_m_${(maleIdx++ % 84) + 1}.jpg`;
+
         bots.push({
           username: fullName,
           email: `${emailSlug}.${bots.length + 1}@lotto4u.bot`,
+          photo_url: photoUrl,
         });
 
         if (bots.length === 200) break;
@@ -107,23 +127,23 @@ async function runBotMigration() {
       let refCode = generateReferralCode();
 
       if (i < existingBots.length) {
-        // Update existing bot with new Khmer name "First Last"
+        // Update existing bot with new Khmer name "First Last" and real human photo
         const botId = existingBots[i].id;
         await db.query(
           `UPDATE users 
-           SET username = $1, email = $2, coin_balance = 100000, is_bot = true, updated_at = NOW()
-           WHERE id = $3;`,
-          [profile.username, profile.email, botId]
+           SET username = $1, email = $2, coin_balance = 100000, is_bot = true, photo_url = $3, updated_at = NOW()
+           WHERE id = $4;`,
+          [profile.username, profile.email, profile.photo_url, botId]
         );
         updatedCount++;
       } else {
-        // Insert new bot record
+        // Insert new bot record with real human photo
         await db.query(
-          `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, referral_code)
-           VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 100000, true, $3)
+          `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, referral_code, photo_url)
+           VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 100000, true, $3, $4)
            ON CONFLICT (username) DO UPDATE 
-           SET is_bot = true, email = EXCLUDED.email, coin_balance = 100000;`,
-          [profile.username, profile.email, refCode]
+           SET is_bot = true, email = EXCLUDED.email, coin_balance = 100000, photo_url = EXCLUDED.photo_url;`,
+          [profile.username, profile.email, refCode, profile.photo_url]
         );
         insertedCount++;
       }
@@ -134,7 +154,7 @@ async function runBotMigration() {
       SELECT count(*) AS total_bots FROM users WHERE is_bot = true;
     `);
     const sampleBotsRes = await db.query(`
-      SELECT id, username, email, coin_balance 
+      SELECT id, username, email, photo_url, coin_balance 
       FROM users 
       WHERE is_bot = true 
       ORDER BY id ASC 

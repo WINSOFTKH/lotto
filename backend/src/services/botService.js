@@ -10,6 +10,20 @@ const tableTargetBotCounts = new Map();
 // 5-second interval between each bot joining one by one
 const BOT_JOIN_INTERVAL_MS = 5000;
 
+// Female Cambodian Given Names set for gender-matching real human portraits
+const FEMALE_GIVEN_NAMES = new Set([
+  'Pisey', 'Rothana', 'Nary', 'Pich', 'Socheata', 'Kalyan', 'Thida', 'Chantha', 
+  'Sreypov', 'Chenda', 'Malis', 'Bopha', 'Vicheka', 'Leakhena', 'Sreyneang', 
+  'Kunthea', 'Sreymom', 'Romdoul', 'Daneth', 'Reasmey', 'Sreynich', 'Chanthou', 
+  'Phalla', 'Channa', 'Ravy', 'Vanny', 'Sokunthea', 'Dalis', 'Sinat', 'Sreyleak', 
+  'Kanha', 'Chanthea', 'Somaly', 'Monineath', 'Dalin', 'Sreylin', 'Voleak', 
+  'Kolab', 'Sitha', 'Botum', 'Sopheap', 'Sokun', 'Vanna', 'Raksmey',
+  'Vathana', 'Theara', 'Ratana', 'Serey', 'Rathana', 'Ratanaka'
+]);
+
+let malePhotoIdx = 0;
+let femalePhotoIdx = 0;
+
 // Predefined realistic Cambodian bot player profiles (200 players)
 // Formatted as "First Last" with a space (e.g. "Sok San", "Chan Dara", "Chea Visal")
 const BOT_PROFILES = [
@@ -62,9 +76,16 @@ const BOT_PROFILES = [
   'Men Pisey', 'Tea Rithy', 'Kong Makara', 'Chhun Sopheak', 'Khorn Sovann'
 ].map((username, index) => {
   const emailSlug = username.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '');
+  const givenName = username.split(' ')[1] || '';
+  const isFemale = FEMALE_GIVEN_NAMES.has(givenName);
+  const photoUrl = isFemale 
+    ? `/avatars/bots/cambodian_w_${(femalePhotoIdx++ % 48) + 1}.jpg`
+    : `/avatars/bots/cambodian_m_${(malePhotoIdx++ % 84) + 1}.jpg`;
+
   return {
     username,
     email: `${emailSlug}.${index + 1}@lotto4u.bot`,
+    photo_url: photoUrl,
   };
 });
 
@@ -91,13 +112,13 @@ class BotService {
         schemaInitialized = true;
       }
 
-      // Seed 200 realistic Cambodian bot profiles
+      // Seed 200 realistic Cambodian bot profiles with real human photos
       for (const profile of BOT_PROFILES) {
         await db.query(
-          `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot)
-           VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 100000, true)
-           ON CONFLICT (username) DO UPDATE SET is_bot = true;`,
-          [profile.username, profile.email]
+          `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, photo_url)
+           VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 100000, true, $3)
+           ON CONFLICT (username) DO UPDATE SET is_bot = true, photo_url = EXCLUDED.photo_url;`,
+          [profile.username, profile.email, profile.photo_url]
         );
       }
     } catch (err) {
@@ -333,11 +354,12 @@ class BotService {
         let botUser = botCandidateRes.rows[0];
         if (!botUser) {
           const extraName = `LuckyBot_${Math.floor(1000 + Math.random() * 9000)}`;
+          const randomPhoto = `/avatars/bots/cambodian_m_${Math.floor(1 + Math.random() * 84)}.jpg`;
           const extraRes = await client.query(
-            `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot)
-             VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 0, true)
+            `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, photo_url)
+             VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 0, true, $3)
              RETURNING id, username, photo_url, is_bot;`,
-            [extraName, `${extraName.toLowerCase()}@kh-lotto.bot`]
+            [extraName, `${extraName.toLowerCase()}@kh-lotto.bot`, randomPhoto]
           );
           botUser = extraRes.rows[0];
         }

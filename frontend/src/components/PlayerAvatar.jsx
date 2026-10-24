@@ -30,7 +30,7 @@ function getDeterministicGradient(seed = '') {
  */
 export function getRandomAvatarUrl(seed = 'player') {
   const cleanSeed = encodeURIComponent(String(seed || 'player').trim());
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanSeed}`;
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
 }
 
 export default function PlayerAvatar({
