@@ -12,13 +12,13 @@ export default function PlayerSeat({
   isHost = false,
   activeReaction = null,
 }) {
-  const drawnSet = new Set(drawnBalls);
+  const drawnSet = new Set((drawnBalls || []).map(Number));
 
   if (!player) return null;
 
   const isPlayerHost = isHost || Boolean(player.isHost);
   const numbers = player.numbers || [];
-  const matchedNumbers = numbers.filter((n) => drawnSet.has(n));
+  const matchedNumbers = numbers.filter((n) => drawnSet.has(Number(n)));
   const matchedCount = matchedNumbers.length;
   const photoUrl = player.photo_url || player.photoUrl || null;
 

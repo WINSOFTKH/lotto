@@ -190,12 +190,37 @@ export default function App() {
       setUser(res.data.data);
       loadUnreadSupportCount();
     } catch (err) {
-      console.warn('Failed to load user profile, token might be expired:', err);
-      handleLogout();
+      console.warn('Failed to load user profile:', err?.message || err);
+      // Strictly only log out if backend returns 401 Unauthorized (invalid/expired JWT)
+      // Never log out on transient mobile network drops or server timeouts!
+      if (err.response?.status === 401) {
+        handleLogout();
+      }
     } finally {
       setAuthResolved(true);
     }
   };
+
+  // Mobile Screen Wake-up & Foreground Re-sync
+  useEffect(() => {
+    if (!token) return;
+
+    const handleAppForeground = () => {
+      if (document.visibilityState === 'visible') {
+        loadUserProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleAppForeground);
+    window.addEventListener('pageshow', handleAppForeground);
+    window.addEventListener('focus', handleAppForeground);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleAppForeground);
+      window.removeEventListener('pageshow', handleAppForeground);
+      window.removeEventListener('focus', handleAppForeground);
+    };
+  }, [token]);
 
   const handleTelegramLogin = async (initData, tgUser) => {
     try {

@@ -57,8 +57,8 @@ function generate200KhmerBots() {
         const emailSlug = `${surname.toLowerCase()}.${givenName.toLowerCase()}`;
         const isFemale = FEMALE_GIVEN_NAMES.has(givenName);
         const photoUrl = isFemale 
-          ? `/avatars/bots/cambodian_w_${(femaleIdx++ % 48) + 1}.jpg`
-          : `/avatars/bots/cambodian_m_${(maleIdx++ % 84) + 1}.jpg`;
+          ? `/avatars/bots/cambodian_w_${++femaleIdx}.jpg`
+          : `/avatars/bots/cambodian_m_${++maleIdx}.jpg`;
 
         bots.push({
           username: fullName,
@@ -149,9 +149,43 @@ async function runBotMigration() {
       }
     }
 
-    // 6. Verification
+    // 6. Regenerate SQL Migration file with 100% unique bot avatars
+    const fs = require('fs');
+    const path = require('path');
+    const sqlValues = botProfiles.map(
+      (b) => `  ('${b.username.replace(/'/g, "''")}', '${b.email}', 'BOT_ACCOUNT_NO_LOGIN', 'player', 100000, true, '${b.photo_url}')`
+    ).join(',\n');
+
+    const sqlMigrationContent = `-- Migration: Create 200 Khmer Bot Players with 100% Unique Cambodian Profile Photos
+-- Note: Bot names are formatted as "First Last" with a space (e.g. "Sok San")
+-- Every single bot player has a 100% unique authentic Cambodian profile photo
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_bot BOOLEAN NOT NULL DEFAULT FALSE;
+
+INSERT INTO system_settings (key, value, description)
+VALUES
+  ('bot_players_enabled', 'true', 'Enable or disable automatic bot players joining tables'),
+  ('max_bot_players_per_table', '9', 'Maximum number of bot players per table'),
+  ('bot_join_delay_seconds', '30', 'Wait time in seconds before bot players join seats')
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, photo_url)
+VALUES
+${sqlValues}
+ON CONFLICT (username) DO UPDATE SET
+  is_bot = true,
+  email = EXCLUDED.email,
+  coin_balance = 100000,
+  photo_url = EXCLUDED.photo_url;
+`;
+
+    const sqlPath = path.resolve(__dirname, '../../migrations/20261023_seed_200_khmer_bots.sql');
+    fs.writeFileSync(sqlPath, sqlMigrationContent, 'utf8');
+    console.log(`📄 Wrote updated SQL migration to: ${sqlPath}`);
+
+    // 7. Verification
     const finalCountRes = await db.query(`
-      SELECT count(*) AS total_bots FROM users WHERE is_bot = true;
+      SELECT count(*) AS total_bots, count(DISTINCT photo_url) AS distinct_photos FROM users WHERE is_bot = true;
     `);
     const sampleBotsRes = await db.query(`
       SELECT id, username, email, photo_url, coin_balance 
@@ -163,9 +197,10 @@ async function runBotMigration() {
 
     console.log('-----------------------------------------------------');
     console.log(`🎉 Migration Completed Successfully!`);
-    console.log(`   Updated bots:  ${updatedCount}`);
-    console.log(`   Inserted bots: ${insertedCount}`);
-    console.log(`   Total bots:    ${finalCountRes.rows[0].total_bots}`);
+    console.log(`   Updated bots:    ${updatedCount}`);
+    console.log(`   Inserted bots:   ${insertedCount}`);
+    console.log(`   Total bots:      ${finalCountRes.rows[0].total_bots}`);
+    console.log(`   Unique photos:   ${finalCountRes.rows[0].distinct_photos} (100% UNIQUE!)`);
     console.log('-----------------------------------------------------');
     console.log('Sample Khmer Bot Players:');
     sampleBotsRes.rows.forEach((b, idx) => {

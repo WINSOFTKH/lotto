@@ -22,6 +22,7 @@ import ExitTableModal from "../components/ExitTableModal";
 import TableChat, { FloatingReactions } from "../components/TableChat";
 import CoinIcon from "../components/CoinIcon";
 import { formatCoins } from "../utils/formatters";
+import { onTelegramEvent } from "../services/telegram";
 
 /**
  * Check if a player object or user ID matches the current user
@@ -176,8 +177,21 @@ export default function GameRoom({
     setIsChatOpen(false);
     loadTableData();
 
+    // Socket Reconnection Handler: Re-join room & catch up missed balls/state
+    const handleReconnect = () => {
+      console.log("⚡ GameRoom: Socket connected/reconnected. Re-joining room & refreshing data...");
+      if (socket) {
+        socket.emit("table:join_room", { tableId });
+      }
+      loadTableData();
+    };
+
     if (socket) {
       socket.emit("table:join_room", { tableId });
+      socket.on("connect", handleReconnect);
+      if (socket.io) {
+        socket.io.on("reconnect", handleReconnect);
+      }
 
       // Player Joined Listener
       socket.on("table:player_joined", (data) => {
@@ -641,6 +655,10 @@ export default function GameRoom({
     return () => {
       if (socket) {
         socket.emit("table:leave_room", { tableId });
+        socket.off("connect", handleReconnect);
+        if (socket.io) {
+          socket.io.off("reconnect", handleReconnect);
+        }
         socket.off("table:player_joined");
         socket.off("table:player_left");
         socket.off("table:round_reset");
@@ -663,6 +681,37 @@ export default function GameRoom({
         clearTimeout(ballHistoryTimerRef.current);
         ballHistoryTimerRef.current = null;
       }
+    };
+  }, [tableId, socket]);
+
+  // Mobile Screen Wake-up & Telegram Foreground State Resync
+  useEffect(() => {
+    const handleWakeUp = () => {
+      if (document.visibilityState === "visible") {
+        console.log("📱 GameRoom: Mobile wake-up detected. Ensuring table room connection & syncing data...");
+        if (socket) {
+          if (!socket.connected) {
+            socket.connect();
+          } else {
+            socket.emit("table:join_room", { tableId });
+          }
+        }
+        loadTableData();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleWakeUp);
+    window.addEventListener("pageshow", handleWakeUp);
+    window.addEventListener("focus", handleWakeUp);
+    const unregisterTgActivated = onTelegramEvent("activated", handleWakeUp);
+    const unregisterTgViewport = onTelegramEvent("viewportChanged", handleWakeUp);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleWakeUp);
+      window.removeEventListener("pageshow", handleWakeUp);
+      window.removeEventListener("focus", handleWakeUp);
+      unregisterTgActivated();
+      unregisterTgViewport();
     };
   }, [tableId, socket]);
 
@@ -728,10 +777,12 @@ export default function GameRoom({
     return () => clearInterval(interval);
   }, [botJoinSeconds]);
 
-  const loadTableData = async () => {
+  const loadTableData = async (retry = 0) => {
     try {
       const res = await tableAPI.getTable(tableId);
-      const data = res.data.data;
+      const data = res.data?.data;
+      if (!data) return;
+
       setError("");
       setActiveRedirectTableId(null);
       setTable(data.table);
@@ -746,23 +797,65 @@ export default function GameRoom({
           ? luckyCount + 20
           : Math.max(30, (data.players?.length || 2) * 5 + 20);
       setTotalPoolCount(count);
+
       if (data.autoStart?.isCountingDown) {
         setAutoStartSeconds(data.autoStart.secondsLeft);
       } else {
         setAutoStartSeconds(null);
       }
+
       if (data.botJoinCountdown?.isWaitingForBots) {
         setBotJoinSeconds(data.botJoinCountdown.secondsLeft);
       } else {
         setBotJoinSeconds(null);
       }
+
       if (data.drawState && data.table?.status === "playing") {
         setDrawnBalls(data.drawState.drawn_numbers || []);
         setCurrentBall(data.drawState.current_ball);
+        setCountdown(null); // Clear any old pre-game countdown
+      } else if (data.table?.status === "completed") {
+        // Table completed while player was away/screen off: retain drawn balls & show winner
+        if (data.drawState?.drawn_numbers) {
+          setDrawnBalls(data.drawState.drawn_numbers);
+        }
+        if (data.drawState?.current_ball) {
+          setCurrentBall(data.drawState.current_ball);
+        }
+        setCountdown(null);
+
+        // If winnerData is not yet set, construct it from table and drawState
+        setWinnerData((prevWinner) => {
+          if (prevWinner) return prevWinner;
+          if (data.table?.winner_id) {
+            const currentPlayersCount =
+              data.table.current_players || (data.players || []).length || 2;
+            const totalPool = (data.table.entry_fee || 100) * currentPlayersCount;
+            return {
+              winner: {
+                userId: data.table.winner_id,
+                username: data.table.winner_name || "Winner",
+                photoUrl: data.table.winner_photo_url || null,
+              },
+              winningBall:
+                data.drawState?.winning_ball || data.drawState?.current_ball,
+              drawnBalls: data.drawState?.drawn_numbers || [],
+              payout: {
+                winnerPayout: Math.floor(totalPool * 0.9),
+                totalPool,
+                platformFee: Math.floor(totalPool * 0.1),
+              },
+              totalBallsDrawn: data.drawState?.drawn_numbers?.length || 0,
+              autoRejoin: data.autoRejoin,
+            };
+          }
+          return null;
+        });
       } else {
         setDrawnBalls([]);
         setCurrentBall(null);
       }
+
       if (data.autoRejoin) {
         setAutoRejoinConfig(data.autoRejoin);
       }
@@ -770,8 +863,17 @@ export default function GameRoom({
         setBotPlayersConfig(data.botPlayers);
       }
     } catch (err) {
-      console.error("Failed to load table:", err);
-      setError("Failed to load table details");
+      console.warn("Failed to load table details:", err?.message || err);
+      if (err.response?.status === 404) {
+        setError("This table is no longer available.");
+        return;
+      }
+      // If mobile network is still reconnecting right after wake-up, retry once after 1.2s
+      if (retry < 2) {
+        setTimeout(() => loadTableData(retry + 1), 1200);
+      } else {
+        setError("Failed to load table details. Reconnecting...");
+      }
     }
   };
 

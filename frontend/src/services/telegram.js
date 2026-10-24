@@ -82,3 +82,23 @@ export const setTelegramBackButton = (visible, onClickCallback = null) => {
     console.warn('[TelegramWebApp] BackButton error:', err);
   }
 };
+
+/**
+ * Register Telegram WebApp lifecycle & UI event listener with auto-cleanup
+ */
+export const onTelegramEvent = (eventType, callback) => {
+  const tg = getTelegramWebApp();
+  if (tg && typeof tg.onEvent === 'function' && typeof callback === 'function') {
+    try {
+      tg.onEvent(eventType, callback);
+      return () => {
+        try {
+          tg.offEvent(eventType, callback);
+        } catch {}
+      };
+    } catch (err) {
+      console.warn(`[TelegramWebApp] Error subscribing to ${eventType}:`, err);
+    }
+  }
+  return () => {};
+};

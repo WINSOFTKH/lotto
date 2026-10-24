@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { io } from "socket.io-client";
+import { onTelegramEvent } from "../services/telegram";
 
 /**
  * Intelligently resolve the Socket.io WebSocket URL:
@@ -73,46 +74,103 @@ export function resolveSocketUrl() {
 
 export function useSocket(token) {
   const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  const reconnect = useCallback(() => {
+    if (socketRef.current) {
+      console.log("⚡ Manually triggering socket reconnect...");
+      if (!socketRef.current.connected) {
+        socketRef.current.connect();
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
 
     const socketUrl = resolveSocketUrl();
     console.log("🔌 Initializing WebSocket connection to:", socketUrl);
 
-    const socket = io(socketUrl, {
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ["websocket", "polling"],
-      reconnectionAttempts: 15,
+      reconnection: true,
+      reconnectionAttempts: Infinity, // Never abandon reconnection on mobile lock/sleep
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
       timeout: 10000,
     });
 
-    socket.on("connect", () => {
+    newSocket.on("connect", () => {
       setIsConnected(true);
-      console.log("⚡ Socket connected to server:", socket.id);
+      console.log("⚡ Socket connected to server:", newSocket.id);
     });
 
-    socket.on("connect_error", (err) => {
+    newSocket.on("connect_error", (err) => {
       console.warn("⚠️ Socket connection error to", socketUrl, ":", err.message);
       setIsConnected(false);
     });
 
-    socket.on("disconnect", (reason) => {
+    newSocket.on("disconnect", (reason) => {
       setIsConnected(false);
       console.log("⚡ Socket disconnected:", reason);
+      // If server closed connection or connection dropped abruptly, automatically try reconnecting immediately
+      if (reason === "io server disconnect") {
+        newSocket.connect();
+      }
     });
 
-    socketRef.current = socket;
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+
+    // Mobile Screen Wake-up & App Foreground Detection
+    const handleWakeUp = () => {
+      if (document.visibilityState === "visible") {
+        console.log("📱 Mobile screen awake / app restored. Checking socket health...");
+        if (newSocket) {
+          if (!newSocket.connected) {
+            console.log("⚡ Socket is disconnected, reconnecting immediately...");
+            newSocket.connect();
+          } else {
+            // Heartbeat check: confirm TCP pipe hasn't become a zombie in background
+            newSocket.emit("client:heartbeat", { ts: Date.now() });
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleWakeUp);
+    window.addEventListener("pageshow", handleWakeUp);
+    window.addEventListener("focus", handleWakeUp);
+    const unregisterTgActivated = onTelegramEvent("activated", handleWakeUp);
+    const unregisterTgViewport = onTelegramEvent("viewportChanged", handleWakeUp);
 
     return () => {
-      socket.disconnect();
+      document.removeEventListener("visibilitychange", handleWakeUp);
+      window.removeEventListener("pageshow", handleWakeUp);
+      window.removeEventListener("focus", handleWakeUp);
+      unregisterTgActivated();
+      unregisterTgViewport();
+      newSocket.disconnect();
+      socketRef.current = null;
+      setSocket(null);
+      setIsConnected(false);
     };
   }, [token]);
 
   return {
-    socket: socketRef.current,
+    socket,
     isConnected,
+    reconnect,
   };
 }

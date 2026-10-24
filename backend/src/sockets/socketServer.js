@@ -17,6 +17,8 @@ function initSocketServer(httpServer) {
       credentials: true,
     },
     transports: ['websocket', 'polling'],
+    pingInterval: 10000,
+    pingTimeout: 8000,
   });
 
   // Enable Redis adapter for horizontal scaling if Redis is operational
@@ -51,6 +53,10 @@ function initSocketServer(httpServer) {
     socket.join(`user:${userId}`);
 
     console.log(`🔌 Socket connected: ${socket.id} (User: ${socket.user.username} [${userId}])`);
+
+    socket.on('client:heartbeat', (data) => {
+      socket.emit('server:heartbeat_ack', { ts: Date.now(), clientTs: data?.ts });
+    });
 
     socket.on('disconnect', (reason) => {
       console.log(`🔌 Socket disconnected: ${socket.id} (${reason})`);

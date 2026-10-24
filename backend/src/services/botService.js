@@ -79,8 +79,8 @@ const BOT_PROFILES = [
   const givenName = username.split(' ')[1] || '';
   const isFemale = FEMALE_GIVEN_NAMES.has(givenName);
   const photoUrl = isFemale 
-    ? `/avatars/bots/cambodian_w_${(femalePhotoIdx++ % 48) + 1}.jpg`
-    : `/avatars/bots/cambodian_m_${(malePhotoIdx++ % 84) + 1}.jpg`;
+    ? `/avatars/bots/cambodian_w_${++femalePhotoIdx}.jpg`
+    : `/avatars/bots/cambodian_m_${++malePhotoIdx}.jpg`;
 
   return {
     username,
@@ -354,7 +354,10 @@ class BotService {
         let botUser = botCandidateRes.rows[0];
         if (!botUser) {
           const extraName = `LuckyBot_${Math.floor(1000 + Math.random() * 9000)}`;
-          const randomPhoto = `/avatars/bots/cambodian_m_${Math.floor(1 + Math.random() * 84)}.jpg`;
+          const isRandomFemale = Math.random() < 0.5;
+          const randomPhoto = isRandomFemale
+            ? `/avatars/bots/cambodian_w_${Math.floor(1 + Math.random() * 118)}.jpg`
+            : `/avatars/bots/cambodian_m_${Math.floor(1 + Math.random() * 118)}.jpg`;
           const extraRes = await client.query(
             `INSERT INTO users (username, email, password_hash, role, coin_balance, is_bot, photo_url)
              VALUES ($1, $2, 'BOT_ACCOUNT_NO_LOGIN', 'player', 0, true, $3)
