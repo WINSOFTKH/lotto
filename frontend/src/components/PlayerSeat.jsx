@@ -18,16 +18,31 @@ export default function PlayerSeat({
 
   const isPlayerHost = isHost || Boolean(player.isHost);
   const numbers = player.numbers || [];
-  const matchedNumbers = numbers.filter((n) => drawnSet.has(Number(n)));
-  const matchedCount = matchedNumbers.length;
+  const matchedNumbers = numbers.filter((n) => isWinner || drawnSet.has(Number(n)));
+  const matchedCount = isWinner ? 5 : matchedNumbers.length;
   const photoUrl = player.photo_url || player.photoUrl || null;
 
   return (
     <motion.div
       layout
+      animate={
+        isWinner
+          ? {
+              scale: [1, 1.025, 1],
+              boxShadow: [
+                "0 0 12px rgba(245,158,11,0.4)",
+                "0 0 32px rgba(245,158,11,0.85)",
+                "0 0 12px rgba(245,158,11,0.4)",
+              ],
+            }
+          : {}
+      }
+      transition={
+        isWinner ? { repeat: Infinity, duration: 0.85, ease: "easeInOut" } : {}
+      }
       className={`relative rounded-xl px-2 py-1.5 sm:px-2.5 sm:py-2 border transition-all ${
         isWinner
-          ? 'bg-amber-100/90 dark:bg-amber-500/15 border-amber-400 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/80'
+          ? 'bg-gradient-to-r from-amber-100/95 via-yellow-100/95 to-amber-200/95 dark:from-amber-600/30 dark:via-yellow-500/25 dark:to-amber-500/30 border-2 border-amber-400 dark:border-amber-300 ring-2 sm:ring-4 ring-amber-400/60 shadow-xl'
           : isCurrentUser
           ? 'bg-white dark:bg-casino-card/95 border-cyan-400 dark:border-cyan-400/80 ring-2 ring-cyan-400/40 shadow-md shadow-cyan-500/15'
           : isPlayerHost
@@ -35,6 +50,17 @@ export default function PlayerSeat({
           : 'bg-white dark:bg-casino-card/85 border-slate-200 dark:border-casino-border hover:border-slate-300 dark:hover:border-gray-700 shadow-sm'
       }`}
     >
+      {/* Bling Bling Sparkling Accents for Winner */}
+      {isWinner && (
+        <div className="absolute -top-2.5 -left-1.5 z-20 pointer-events-none flex items-center space-x-1 animate-bounce">
+          <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-300 fill-amber-400" />
+        </div>
+      )}
+      {isWinner && (
+        <div className="absolute -top-2.5 -right-1.5 z-20 pointer-events-none flex items-center space-x-1 animate-pulse">
+          <Sparkles className="w-4 h-4 text-yellow-500 dark:text-yellow-300 fill-yellow-300" />
+        </div>
+      )}
       {/* Live Animated Reaction & Message Speech Bubble */}
       <AnimatePresence>
         {activeReaction && (activeReaction.emoji || activeReaction.message) && (
@@ -75,7 +101,7 @@ export default function PlayerSeat({
             size="sm"
             borderColor={
               isWinner
-                ? 'border border-amber-400 shadow-sm'
+                ? 'border-2 border-amber-400 ring-2 ring-yellow-300 shadow-md shadow-amber-500/50'
                 : isCurrentUser
                 ? 'border-2 border-cyan-400 ring-1 ring-cyan-400/50 shadow-sm'
                 : isPlayerHost
@@ -84,7 +110,14 @@ export default function PlayerSeat({
             }
           />
 
-          <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-gray-200 truncate min-w-0 max-w-[92px] xs:max-w-[125px] sm:max-w-[160px]" title={player.username}>
+          <span
+            className={`text-[11px] sm:text-xs font-bold truncate min-w-0 max-w-[92px] xs:max-w-[125px] sm:max-w-[160px] ${
+              isWinner
+                ? 'text-amber-900 dark:text-amber-200 font-black'
+                : 'text-slate-900 dark:text-gray-200'
+            }`}
+            title={player.username}
+          >
             {player.username}
           </span>
 
@@ -108,14 +141,14 @@ export default function PlayerSeat({
         {/* Matches / Winner Badge */}
         <div className="flex items-center space-x-0.5 sm:space-x-1 flex-shrink-0">
           {isWinner && (
-            <span className="text-[8px] sm:text-[9px] font-black px-1 py-0.2 rounded bg-gradient-to-r from-amber-400 to-yellow-300 text-black flex items-center space-x-0.5 shadow-sm">
+            <span className="text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black flex items-center space-x-0.5 shadow-md shadow-amber-500/50 ring-1 ring-yellow-100 animate-bounce">
               <Crown className="w-2.5 h-2.5 fill-black" />
-              <span>WIN</span>
+              <span>WINNER!</span>
             </span>
           )}
           <span className={`text-[9px] sm:text-[10px] font-mono font-black px-1.5 py-0.5 rounded-full border ${
-            matchedCount === 5
-              ? 'bg-amber-400 text-black border-amber-300'
+            isWinner || matchedCount === 5
+              ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-black border-amber-300 ring-1 ring-yellow-200 font-black shadow-md'
               : matchedCount > 0
               ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 border-cyan-500/30'
               : 'bg-slate-200/80 dark:bg-gray-800/80 text-slate-700 dark:text-gray-400 border-slate-300 dark:border-gray-700/60'
@@ -128,14 +161,26 @@ export default function PlayerSeat({
       {/* 5 Compact Lottery Numbers - Circle Round */}
       <div className="flex items-center justify-center space-x-1 sm:space-x-1.5 mt-1">
         {numbers.map((num, i) => {
-          const isMatched = drawnSet.has(num);
+          const isMatched = isWinner || drawnSet.has(Number(num));
           return (
             <motion.div
               key={i}
-              animate={isMatched ? { scale: [1, 1.15, 1] } : {}}
-              transition={{ duration: 0.2 }}
+              animate={
+                isWinner
+                  ? { scale: [1, 1.22, 1], y: [0, -3.5, 0] }
+                  : isMatched
+                  ? { scale: [1, 1.15, 1] }
+                  : {}
+              }
+              transition={
+                isWinner
+                  ? { repeat: Infinity, duration: 0.75, delay: i * 0.12 }
+                  : { duration: 0.2 }
+              }
               className={`w-[22px] h-[22px] xs:w-[25px] xs:h-[25px] sm:w-[28px] sm:h-[28px] aspect-square rounded-full flex items-center justify-center font-mono font-black text-[10px] xs:text-[11px] sm:text-xs transition-all ${
-                isMatched
+                isWinner
+                  ? 'bg-gradient-to-tr from-amber-500 via-yellow-300 to-amber-300 text-black shadow-lg shadow-amber-500/70 ring-2 ring-yellow-200 font-black'
+                  : isMatched
                   ? 'bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-black shadow-md shadow-amber-500/50 ring-1 ring-yellow-200'
                   : 'bg-slate-100 dark:bg-casino-dark/95 border border-slate-300 dark:border-casino-border text-slate-800 dark:text-gray-300 shadow-inner'
               }`}

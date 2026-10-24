@@ -147,6 +147,8 @@ export default function GameRoom({
   const autoRejoinTimerRef = useRef(null);
   const returnToLobbyTimerRef = useRef(null);
   const ballHistoryTimerRef = useRef(null);
+  const winnerPopupTimerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
   const joiningLockRef = useRef(false);
   const wasSeatedBeforeGameEndRef = useRef(false);
   const [joining, setJoining] = useState(false);
@@ -179,7 +181,9 @@ export default function GameRoom({
 
     // Socket Reconnection Handler: Re-join room & catch up missed balls/state
     const handleReconnect = () => {
-      console.log("⚡ GameRoom: Socket connected/reconnected. Re-joining room & refreshing data...");
+      console.log(
+        "⚡ GameRoom: Socket connected/reconnected. Re-joining room & refreshing data...",
+      );
       if (socket) {
         socket.emit("table:join_room", { tableId });
       }
@@ -332,6 +336,10 @@ export default function GameRoom({
 
       // Table Round Reset Listener (when a completed table starts next round)
       socket.on("table:round_reset", (data) => {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
         if (ballHistoryTimerRef.current) {
           clearTimeout(ballHistoryTimerRef.current);
           ballHistoryTimerRef.current = null;
@@ -342,6 +350,7 @@ export default function GameRoom({
         setPlayers([]);
         setTotalPoolCount(30);
         setAutoStartSeconds(null);
+        setCountdown(null);
         setCountdownResetNotice(null);
         setTable((prev) =>
           prev
@@ -368,6 +377,10 @@ export default function GameRoom({
 
       // Crashed Game Reset to Waiting Listener (Scheduler recovery)
       socket.on("table:reset_to_waiting", (data) => {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
         if (ballHistoryTimerRef.current) {
           clearTimeout(ballHistoryTimerRef.current);
           ballHistoryTimerRef.current = null;
@@ -404,6 +417,10 @@ export default function GameRoom({
 
       // Game Start Countdown Listener
       socket.on("table:game_start", (data) => {
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
         if (ballHistoryTimerRef.current) {
           clearTimeout(ballHistoryTimerRef.current);
           ballHistoryTimerRef.current = null;
@@ -447,10 +464,13 @@ export default function GameRoom({
           }));
           setPlayers(prioritizePlayers(mapped, user, hostId));
         }
-        const timer = setInterval(() => {
+        countdownTimerRef.current = setInterval(() => {
           setCountdown((c) => {
-            if (c <= 1) {
-              clearInterval(timer);
+            if (c === null || c <= 1) {
+              if (countdownTimerRef.current) {
+                clearInterval(countdownTimerRef.current);
+                countdownTimerRef.current = null;
+              }
               return null;
             }
             return c - 1;
@@ -464,6 +484,13 @@ export default function GameRoom({
         if (tableRef.current?.status && tableRef.current.status !== "playing") {
           return;
         }
+        // First ball has arrived: clear pre-game countdown
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+        }
+        setCountdown(null);
+
         setCurrentBall(data.ball);
         if (data.totalPoolCount) {
           setTotalPoolCount(data.totalPoolCount);
@@ -519,52 +546,85 @@ export default function GameRoom({
 
       // Winner Announced Listener
       socket.on("draw:winner", (data) => {
+        // 1. Clear any pending ball history timer and sync final drawn balls immediately
+        if (ballHistoryTimerRef.current) {
+          clearTimeout(ballHistoryTimerRef.current);
+          ballHistoryTimerRef.current = null;
+        }
         if (data.drawnBalls) {
-          if (ballHistoryTimerRef.current) {
-            clearTimeout(ballHistoryTimerRef.current);
-            ballHistoryTimerRef.current = null;
-          }
           setDrawnBalls(data.drawnBalls);
         }
-        setWinnerData(data);
-        if (table) {
-          setTable((prev) => (prev ? { ...prev, status: "completed" } : prev));
+        if (data.winningBall) {
+          setCurrentBall(data.winningBall);
         }
 
-        const autoRejoinCfg = data.autoRejoin ||
-          autoRejoinConfig || { enabled: true, delaySeconds: 7 };
-        if (data.autoRejoin) {
-          setAutoRejoinConfig(data.autoRejoin);
-        }
-
-        const isPlayerSeated =
-          wasSeatedBeforeGameEndRef.current ||
-          players.some((p) => (p.user_id || p.userId) === user?.id);
-        const currentBalance =
-          user?.coinBalance !== undefined ? user.coinBalance : 0;
-        const entryFee = table?.entry_fee || 100;
-        const hasCoins = currentBalance >= entryFee;
-
-        const duration = autoRejoinCfg.delaySeconds || 7;
-
-        if (isPlayerSeated) {
-          if (rejoinCountRef.current < 1) {
-            // Player has not re-joined yet: allow ONE re-join!
-            if (autoRejoinCfg.enabled && hasCoins) {
-              setAutoRejoinSeconds(duration);
-            } else {
-              setAutoRejoinSeconds(null);
+        // 2. Immediately highlight the winning player on the board with all 5 matches
+        setPlayers((prev) => {
+          return prev.map((p) => {
+            const pId =
+              p.user_id !== undefined
+                ? p.user_id
+                : p.userId !== undefined
+                  ? p.userId
+                  : p.id;
+            const winnerId =
+              data.winner?.userId || data.winner?.user_id || data.winner?.id;
+            if (String(pId) === String(winnerId) || isMatchingUser(data.winner, p)) {
+              return {
+                ...p,
+                matched_count: 5,
+                isWinner: true,
+              };
             }
-            setReturnToLobbySeconds(null);
-          } else {
-            // Player already re-joined 1 time: NEXT GAME FINISHED -> automatically return to lobby!
-            setAutoRejoinSeconds(null);
-            setReturnToLobbySeconds(duration);
-          }
-        } else {
-          setAutoRejoinSeconds(null);
-          setReturnToLobbySeconds(null);
+            return p;
+          });
+        });
+
+        // 3. Mark table status as completed
+        setTable((prev) => (prev ? { ...prev, status: "completed" } : prev));
+
+        // 4. Wait 2 seconds (2000ms) after the last match number is shown before popping up the Winner Celebration Modal
+        if (winnerPopupTimerRef.current) {
+          clearTimeout(winnerPopupTimerRef.current);
         }
+        winnerPopupTimerRef.current = setTimeout(() => {
+          setWinnerData(data);
+
+          const autoRejoinCfg = data.autoRejoin ||
+            autoRejoinConfig || { enabled: true, delaySeconds: 7 };
+          if (data.autoRejoin) {
+            setAutoRejoinConfig(data.autoRejoin);
+          }
+
+          const isPlayerSeated =
+            wasSeatedBeforeGameEndRef.current ||
+            players.some((p) => (p.user_id || p.userId) === user?.id);
+          const currentBalance =
+            user?.coinBalance !== undefined ? user.coinBalance : 0;
+          const entryFee = table?.entry_fee || 100;
+          const hasCoins = currentBalance >= entryFee;
+
+          const duration = autoRejoinCfg.delaySeconds || 7;
+
+          if (isPlayerSeated) {
+            if (rejoinCountRef.current < 1) {
+              // Player has not re-joined yet: allow ONE re-join!
+              if (autoRejoinCfg.enabled && hasCoins) {
+                setAutoRejoinSeconds(duration);
+              } else {
+                setAutoRejoinSeconds(null);
+              }
+              setReturnToLobbySeconds(null);
+            } else {
+              // Player already re-joined 1 time: NEXT GAME FINISHED -> automatically return to lobby!
+              setAutoRejoinSeconds(null);
+              setReturnToLobbySeconds(duration);
+            }
+          } else {
+            setAutoRejoinSeconds(null);
+            setReturnToLobbySeconds(null);
+          }
+        }, 2000);
       });
 
       // Table Chat History Listener
@@ -681,6 +741,14 @@ export default function GameRoom({
         clearTimeout(ballHistoryTimerRef.current);
         ballHistoryTimerRef.current = null;
       }
+      if (winnerPopupTimerRef.current) {
+        clearTimeout(winnerPopupTimerRef.current);
+        winnerPopupTimerRef.current = null;
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
     };
   }, [tableId, socket]);
 
@@ -688,7 +756,9 @@ export default function GameRoom({
   useEffect(() => {
     const handleWakeUp = () => {
       if (document.visibilityState === "visible") {
-        console.log("📱 GameRoom: Mobile wake-up detected. Ensuring table room connection & syncing data...");
+        console.log(
+          "📱 GameRoom: Mobile wake-up detected. Ensuring table room connection & syncing data...",
+        );
         if (socket) {
           if (!socket.connected) {
             socket.connect();
@@ -704,7 +774,10 @@ export default function GameRoom({
     window.addEventListener("pageshow", handleWakeUp);
     window.addEventListener("focus", handleWakeUp);
     const unregisterTgActivated = onTelegramEvent("activated", handleWakeUp);
-    const unregisterTgViewport = onTelegramEvent("viewportChanged", handleWakeUp);
+    const unregisterTgViewport = onTelegramEvent(
+      "viewportChanged",
+      handleWakeUp,
+    );
 
     return () => {
       document.removeEventListener("visibilitychange", handleWakeUp);
@@ -813,7 +886,17 @@ export default function GameRoom({
       if (data.drawState && data.table?.status === "playing") {
         setDrawnBalls(data.drawState.drawn_numbers || []);
         setCurrentBall(data.drawState.current_ball);
-        setCountdown(null); // Clear any old pre-game countdown
+        // Only clear pre-game countdown if balls have ACTUALLY started drawing!
+        if (
+          (data.drawState.drawn_numbers && data.drawState.drawn_numbers.length > 0) ||
+          (data.drawState.current_ball !== null && data.drawState.current_ball !== undefined)
+        ) {
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+          }
+          setCountdown(null);
+        }
       } else if (data.table?.status === "completed") {
         // Table completed while player was away/screen off: retain drawn balls & show winner
         if (data.drawState?.drawn_numbers) {
@@ -830,7 +913,8 @@ export default function GameRoom({
           if (data.table?.winner_id) {
             const currentPlayersCount =
               data.table.current_players || (data.players || []).length || 2;
-            const totalPool = (data.table.entry_fee || 100) * currentPlayersCount;
+            const totalPool =
+              (data.table.entry_fee || 100) * currentPlayersCount;
             return {
               winner: {
                 userId: data.table.winner_id,
@@ -878,6 +962,14 @@ export default function GameRoom({
   };
 
   const handleCancelAutoRejoin = () => {
+    if (winnerPopupTimerRef.current) {
+      clearTimeout(winnerPopupTimerRef.current);
+      winnerPopupTimerRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     if (autoRejoinTimerRef.current) {
       clearInterval(autoRejoinTimerRef.current);
       autoRejoinTimerRef.current = null;
@@ -1292,8 +1384,7 @@ export default function GameRoom({
         <div className="bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black px-2.5 py-1.5 sm:p-3.5 rounded-xl sm:rounded-2xl text-center shadow-md sm:shadow-lg animate-pulse flex items-center justify-center space-x-1.5 sm:space-x-2">
           <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-black flex-shrink-0" />
           <span className="text-[10px] sm:text-sm uppercase tracking-tight sm:tracking-wide truncate">
-            Live Drawing from {totalPoolCount} Lucky Numbers begins in{" "}
-            {countdown}s...
+            Live Drawing Lucky Numbers begins in {countdown}s...
           </span>
         </div>
       )}
@@ -1321,7 +1412,10 @@ export default function GameRoom({
                 player={player}
                 drawnBalls={drawnBalls}
                 isCurrentUser={isCurrent}
-                isWinner={isMatchingUser(winnerData?.winner, player)}
+                isWinner={
+                  Boolean(player.isWinner) ||
+                  isMatchingUser(winnerData?.winner, player)
+                }
                 isHost={isPlayerHost}
                 activeReaction={playerReactions[pId]}
               />
@@ -1597,7 +1691,10 @@ export default function GameRoom({
                       player={player}
                       drawnBalls={drawnBalls}
                       isCurrentUser={isCurrent}
-                      isWinner={isMatchingUser(winnerData?.winner, player)}
+                      isWinner={
+                        Boolean(player.isWinner) ||
+                        isMatchingUser(winnerData?.winner, player)
+                      }
                       isHost={isPlayerHost}
                       activeReaction={playerReactions[pId]}
                     />
@@ -1646,7 +1743,10 @@ export default function GameRoom({
                 player={player}
                 drawnBalls={drawnBalls}
                 isCurrentUser={isCurrent}
-                isWinner={isMatchingUser(winnerData?.winner, player)}
+                isWinner={
+                  Boolean(player.isWinner) ||
+                  isMatchingUser(winnerData?.winner, player)
+                }
                 isHost={isPlayerHost}
                 activeReaction={playerReactions[pId]}
               />

@@ -455,7 +455,7 @@ class TableSocketHandler {
         players,
         countdownSeconds: 5,
         totalPoolCount,
-        message: `Game starting with ${players.length} players! Drawing from ${totalPoolCount} lucky numbers begins in 5 seconds...`,
+        message: `Game starting with ${players.length} players! Drawing lucky numbers begins in 5 seconds...`,
       });
 
       // Clear any existing active timer or start countdown for this table
